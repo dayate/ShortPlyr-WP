@@ -1,0 +1,18 @@
+# Build files
+/node_modules/
+/vendor/
+npm-debug.log
+yarn-error.log
+
+# IDE/Editor specific files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# System files
+.DS_Store
+Thumbs.db
+
+# WordPress specific ignores (if any, usually handled outside theme)
+/wp-content/uploads/

@@ -1,0 +1,60 @@
+/*
+Theme Name: Sudut Cerita Theme
+Author: Anda
+Description: Tema kustom untuk menampilkan serial video tanpa plugin ACF.
+Version: 2.0
+*/
+
+/* 0. Pengaturan Font Dasar */
+body {
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* 1. Transformasi untuk Bottom Sheet yang dikontrol oleh JS */
+.sheet {
+  transform: translateY(var(--sheet-y));
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: transform;
+}
+
+/* 2. Animasi Shimmer untuk Skeleton Loader */
+.sk-bar,
+.sk-chip {
+  background: linear-gradient(90deg, #1f2328 0%, #2a2f36 50%, #1f2328 100%);
+  background-size: 200%;
+  animation: shimmer 1.2s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 0% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* 3. Grid Episode Dinamis */
+.episode-grid {
+  grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+}
+
+@media (min-width: 1024px) {
+  .episode-grid {
+    grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  }
+}
+
+/* Mengatasi beberapa default xgplayer jika diperlukan */
+.xgplayer .xgplayer-controls {
+  bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+}
+
+.xgplayer video {
+  object-fit: contain !important;
+}
+
+/* Perbaikan untuk tombol sinopsis */
+#synopsisToggle[aria-expanded="true"] i {
+  transform: rotate(180deg);
+}
+
+#synopsisContent[aria-expanded="true"] {
+  grid-template-rows: 1fr;
+}
