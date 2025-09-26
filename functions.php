@@ -80,11 +80,11 @@ function serial_video_adsterra_meta_box_html($post) {
     ?>
     <p>
         <label for="adsterra_url"><strong>URL Direct Link:</strong></label><br>
-        <input type="url" id="adsterra_url" name="adsterra_url" value="<?php echo esc_url($adsterra_url); ?>" class="widefat" placeholder="https://..."/>
+        <input type="url" id="adsterra_url" name="adsterra_url" value="<?php echo esc_url($adsterra_url); ?>" class="widefat" placeholder="https://..." />
     </p>
     <p>
         <label for="ad_count"><strong>Jumlah Episode Iklan:</strong></label><br>
-        <input type="number" id="ad_count" name="ad_count" value="<?php echo esc_attr($ad_count); ?>" class="widefat" min="0" placeholder="Contoh: 2"/>
+        <input type="number" id="ad_count" name="ad_count" value="<?php echo esc_attr($ad_count); ?>" class="widefat" min="0" placeholder="Contoh: 2" />
         <small>Masukkan angka. Episode akan dipilih secara acak. Kosongkan atau isi 0 untuk menonaktifkan.</small>
     </p>
     <?php
@@ -122,15 +122,14 @@ function sudutcerita_enqueue_assets() {
         wp_enqueue_style('google-fonts', 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap', [], null);
 
         // 1. Memuat Tailwind CSS via CDN SCRIPT
-        wp_enqueue_script('tailwindcss', 'https://cdn.tailwindcss.com', [], null, false);
+        wp_enqueue_style('tailwindcss', get_template_directory_uri() . '/assets/css/main.min.css', [], null, false);
 
         // 2. Memuat semua file CSS
-        wp_enqueue_style('sudutcerita-style', get_template_directory_uri() . '/assets/css/style.css', [], '2.0');
-        wp_enqueue_style('xgplayer-style', 'https://cdn.jsdelivr.net/npm/xgplayer/dist/index.min.css', [], null);
-        wp_enqueue_style('remixicon', 'https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css', [], null);
+        wp_enqueue_style('xgplayer-style', get_template_directory_uri() . '/assets/css/xgplayer/index.min.css', [], null);
+        wp_enqueue_style('remixicon', get_template_directory_uri() . '/assets/css/remixicon/remixicon.css', [], '4.3.0');
 
         // 3. Memuat semua file JS
-        wp_enqueue_script('xgplayer-script', 'https://cdn.jsdelivr.net/npm/xgplayer/dist/index.min.js', [], null, true);
+        wp_enqueue_script('xgplayer-script', get_template_directory_uri() . '/assets/js/xgplayer/index.min.js', [], null, true);
         wp_enqueue_script('sudutcerita-app', get_template_directory_uri() . '/assets/js/app.js', ['xgplayer-script'], '1.0', true);
 
         // 4. Mengirim data dari PHP ke JavaScript
@@ -185,3 +184,18 @@ function sudutcerita_enqueue_assets() {
     }
 }
 add_action('wp_enqueue_scripts', 'sudutcerita_enqueue_assets');
+
+function prefix_theme_templates( $template ) {
+    $post_types = array( 'serial_video' );
+
+    if ( is_post_type_archive( $post_types ) && file_exists( get_stylesheet_directory() . '/templates/archive-serial_video.php' ) ) {
+        $template = get_stylesheet_directory() . '/templates/archive-serial_video.php';
+    }
+
+    if ( is_singular( $post_types ) && file_exists( get_stylesheet_directory() . '/templates/single-serial_video.php' ) ) {
+        $template = get_stylesheet_directory() . '/templates/single-serial_video.php';
+    }
+
+    return $template;
+}
+add_filter( 'template_include', 'prefix_theme_templates' );
