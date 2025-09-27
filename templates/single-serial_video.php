@@ -45,7 +45,16 @@
             <div class="sheet-scroll h-[calc(100%-25px)] overflow-y-auto px-5 pt-4 pb-0 scroll-smooth">
                 <section class="detail flex flex-col gap-4 items-stretch">
                     <div class="detail-header flex gap-4 items-center">
-                        <img class="poster w-[110px] h-[148px] object-cover rounded-lg bg-zinc-800" src="<?php echo esc_url(get_the_post_thumbnail_url(get_the_ID(), 'full')); ?>" alt="Poster <?php the_title_attribute(); ?>" />
+                        <?php
+// Dapatkan URL gambar poster
+$poster_url = get_the_post_thumbnail_url(get_the_ID(), 'medium'); // Gunakan ukuran yang lebih sesuai, bukan 'full'
+?>
+<img class="poster w-[110px] h-[148px] object-cover rounded-lg bg-zinc-800"
+     src="<?php echo esc_url($poster_url); ?>"
+     alt="Poster <?php the_title_attribute(); ?>"
+     width="110"
+     height="148"
+     loading="lazy" />
                         <div class="meta">
                             <h1 class="title text-lg sm:text-xl font-bold mb-1.5"><?php the_title(); ?></h1>
                             <?php $episodes_meta = get_post_meta(get_the_ID(), '_serial_video_episodes', true); ?>

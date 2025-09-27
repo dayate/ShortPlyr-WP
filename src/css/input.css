@@ -1,11 +1,57 @@
+/* src/css/input.css */
+
+/* 1. Impor utama untuk Tailwind CSS v4 */
 @import "tailwindcss";
 
+
+/* 1. Definisi Font Montserrat (Self-Hosted) */
+/* Montserrat Regular */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap; /* Penting untuk performa */
+  src: url('../../assets/fonts/montserrat-regular.woff2') format('woff2');
+}
+
+/* Montserrat Bold */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap; /* Penting untuk performa */
+  src: url('../../assets/fonts/montserrat-bold.woff2') format('woff2');
+}
+
+/* 2. Impor CSS untuk XGPlayer */
+@import "../../assets/css/xgplayer/index.min.css";
+@import "../../assets/css/remixicon/remixicon.css";
+
 /*
-Theme Name: Sudut Cerita Theme
-Author: Anda
-Description: Tema kustom untuk menampilkan serial video tanpa plugin ACF.
-Version: 2.0
-*/
+ * 3. Kode Remixicon dengan Path Font yang Sudah Diperbaiki
+ * -----------------------------------------------------------
+ * Kita salin langsung isinya ke sini dan perbaiki path url()
+ * agar menunjuk ke folder 'remixicon'.
+ */
+
+@font-face {
+  font-family: "remixicon";
+  src: url("remixicon/remixicon.eot?t=1723129184542"); /* IE9 Compat Modes */
+  src: url("remixicon/remixicon.eot?t=1723129184542#iefix") format("embedded-opentype"), /* IE6-IE8 */
+    url("remixicon/remixicon.woff2?t=1723129184542") format("woff2"), /* Super Modern Browsers */
+    url("remixicon/remixicon.woff?t=1723129184542") format("woff"), /* Modern Browsers */
+    url("remixicon/remixicon.ttf?t=1723129184542") format("truetype"), /* Safari, Android, iOS */
+    url("remixicon/remixicon.svg?t=1723129184542#remixicon") format("svg"); /* Legacy iOS */
+  font-display: swap; /* Tambahan untuk performa */
+}
+
+.ri {
+  font-family: "remixicon" !important;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 
 /* 0. Pengaturan Font Dasar */
 body {

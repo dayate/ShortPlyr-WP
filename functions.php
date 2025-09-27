@@ -118,21 +118,10 @@ add_action('admin_enqueue_scripts', 'serial_video_admin_scripts');
 
 function sudutcerita_enqueue_assets() {
     if (is_singular('serial_video')) {
-        // 0. Memuat Google Fonts
-        wp_enqueue_style('google-fonts', 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap', [], null);
+        // 1. Memuat CSS
+        wp_enqueue_style('sudutcerita-main-style', get_template_directory_uri() . '/assets/css/main.min.css', [], '1.0');
 
-        // 1. Memuat Tailwind CSS via CDN SCRIPT
-        wp_enqueue_style('tailwindcss', get_template_directory_uri() . '/assets/css/main.min.css', [], null, false);
-
-        // 2. Memuat semua file CSS
-        wp_enqueue_style('xgplayer-style', get_template_directory_uri() . '/assets/css/xgplayer/index.min.css', [], null);
-        wp_enqueue_style('remixicon', get_template_directory_uri() . '/assets/css/remixicon/remixicon.css', [], '4.3.0');
-
-        // 3. Memuat semua file JS
-        wp_enqueue_script('xgplayer-script', get_template_directory_uri() . '/assets/js/xgplayer/index.min.js', [], null, true);
-        wp_enqueue_script('sudutcerita-app', get_template_directory_uri() . '/assets/js/app.js', ['xgplayer-script'], '1.0', true);
-
-        // 4. Mengirim data dari PHP ke JavaScript
+        // 2. Mempersiapkan data untuk JavaScript
         $episodes = get_post_meta(get_the_ID(), '_serial_video_episodes', true);
         $episodes_data = [];
         $adsterra_url = get_post_meta(get_the_ID(), '_adsterra_direct_link_url', true);
@@ -145,7 +134,7 @@ function sudutcerita_enqueue_assets() {
             $ad_indices = [];
 
             if (!empty($adsterra_url) && $ad_count > 0 && $total_episodes > 0) {
-                $ad_count = min($ad_count, $total_episodes); // Pastikan jumlah iklan tidak melebihi jumlah episode
+                $ad_count = min($ad_count, $total_episodes);
                 $possible_indices = range(0, $total_episodes - 1);
                 shuffle($possible_indices);
                 $ad_indices = array_slice($possible_indices, 0, $ad_count);
@@ -153,7 +142,6 @@ function sudutcerita_enqueue_assets() {
 
             foreach($episodes as $index => $episode) {
                 if (in_array($index, $ad_indices)) {
-                    // JIKA INI SLOT IKLAN: Kirim URL iklan DAN URL asli
                     $episodes_data[] = [
                         'episode'      => $episode['nomor'],
                         'is_ad'        => true,
@@ -161,7 +149,6 @@ function sudutcerita_enqueue_assets() {
                         'original_src' => $episode['url']
                     ];
                 } else {
-                    // Jika bukan slot iklan, format tetap sama
                     $episodes_data[] = [
                         'episode' => $episode['nomor'],
                         'is_ad'   => false,
@@ -171,16 +158,21 @@ function sudutcerita_enqueue_assets() {
             }
         }
 
-        $unique_series_id = 'series_' . get_the_ID();
         $data_for_js = [
-            'id'       => $unique_series_id,
+            'id'       => 'series_' . get_the_ID(),
             'title'    => get_the_title(),
-            'poster'   => get_the_post_thumbnail_url(get_the_ID(), 'full'),
+            'poster'   => get_the_post_thumbnail_url(get_the_ID(), 'medium'),
             'total'    => count($episodes_data),
             'synopsis' => get_the_content(),
             'episodes' => $episodes_data
         ];
-        wp_localize_script('sudutcerita-app', 'seriesData', $data_for_js);
+
+        // 3. Memuat file JS utama dengan versi dinamis untuk cache busting
+        $script_ver = filemtime( get_theme_file_path( '/assets/js/main.min.js' ) );
+        wp_enqueue_script('sudutcerita-main-script', get_template_directory_uri() . '/assets/js/main.min.js', [], $script_ver, true);
+
+        // 4. Mengirim data ke JavaScript menggunakan wp_localize_script (cara lama namun diperlukan oleh skrip)
+        wp_localize_script('sudutcerita-main-script', 'seriesData', $data_for_js);
     }
 }
 add_action('wp_enqueue_scripts', 'sudutcerita_enqueue_assets');
