@@ -47,7 +47,8 @@
                     <div class="detail-header flex gap-4 items-center">
                         <?php
 // Dapatkan URL gambar poster
-$poster_url = get_the_post_thumbnail_url(get_the_ID(), 'medium'); // Gunakan ukuran yang lebih sesuai, bukan 'full'
+$custom_poster_url = get_post_meta(get_the_ID(), '_serial_video_poster_url', true);
+$poster_url = !empty($custom_poster_url) ? $custom_poster_url : get_the_post_thumbnail_url(get_the_ID(), 'medium');
 ?>
 <img class="poster w-[110px] h-[148px] object-cover rounded-lg bg-zinc-800"
      src="<?php echo esc_url($poster_url); ?>"

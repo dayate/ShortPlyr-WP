@@ -104,6 +104,44 @@ function serial_video_save_adsterra_meta_box($post_id) {
 }
 add_action('save_post_serial_video', 'serial_video_save_adsterra_meta_box');
 
+// =============================================================================
+// BAGIAN 2.6: META BOX UNTUK URL POSTER KUSTOM
+// =============================================================================
+function serial_video_poster_url_meta_box() {
+    add_meta_box(
+        'serial_video_poster_url_box',
+        'URL Poster Kustom',
+        'serial_video_poster_url_meta_box_html',
+        'serial_video',
+        'side',
+        'default'
+    );
+}
+add_action('add_meta_boxes', 'serial_video_poster_url_meta_box');
+
+function serial_video_poster_url_meta_box_html($post) {
+    $poster_url = get_post_meta($post->ID, '_serial_video_poster_url', true);
+    wp_nonce_field('serial_video_poster_url_nonce_action', 'serial_video_poster_url_nonce');
+    ?>
+    <p>
+        <label for="poster_url"><strong>URL Gambar Poster:</strong></label><br>
+        <input type="url" id="poster_url" name="poster_url" value="<?php echo esc_url($poster_url); ?>" class="widefat" placeholder="https://.../poster.jpg" />
+        <small>Masukkan URL gambar poster. Jika kosong, akan menggunakan "Gambar Poster" (Featured Image).</small>
+    </p>
+    <?php
+}
+
+function serial_video_save_poster_url_meta_box($post_id) {
+    if (!isset($_POST['serial_video_poster_url_nonce']) || !wp_verify_nonce($_POST['serial_video_poster_url_nonce'], 'serial_video_poster_url_nonce_action')) return;
+    if (!current_user_can('edit_post', $post_id)) return;
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+
+    if (isset($_POST['poster_url'])) {
+        update_post_meta($post_id, '_serial_video_poster_url', esc_url_raw($_POST['poster_url']));
+    }
+}
+add_action('save_post_serial_video', 'serial_video_save_poster_url_meta_box');
+
 
 // =============================================================================
 // BAGIAN 3: ENQUEUE SCRIPTS & STYLES (VERSI CDN)
@@ -158,10 +196,13 @@ function sudutcerita_enqueue_assets() {
             }
         }
 
+        $custom_poster_url = get_post_meta(get_the_ID(), '_serial_video_poster_url', true);
+        $poster_url = !empty($custom_poster_url) ? $custom_poster_url : get_the_post_thumbnail_url(get_the_ID(), 'medium');
+
         $data_for_js = [
             'id'       => 'series_' . get_the_ID(),
             'title'    => get_the_title(),
-            'poster'   => get_the_post_thumbnail_url(get_the_ID(), 'medium'),
+            'poster'   => $poster_url,
             'total'    => count($episodes_data),
             'synopsis' => get_the_content(),
             'episodes' => $episodes_data
