@@ -1,3 +1,7 @@
+<?php
+// Panggil fungsi helper dari functions.php untuk mengambil semua data serial.
+$serial_data = get_processed_serial_data(get_the_ID());
+?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
@@ -24,7 +28,7 @@
 
             <div id="playbackIndicator" class="absolute top-5 left-1/2 -translate-x-1/2 z-[3] flex items-center gap-2 text-white font-bold text-sm pointer-events-none opacity-0 transition-opacity duration-200 [text-shadow:_0_1px_4px_rgba(0,0,0,.7)]" aria-hidden="true">
                 <i class="ri-speed-fill text-xl"></i>
-                <span id="playbackSpeedText">2x</span>
+                <span id="playbackSpeedText"></span>
             </div>
 
             <nav id="sideControls" class="side-controls absolute bottom-[70px] right-3 flex flex-col gap-2.5 z-[4] transition-opacity duration-200" aria-label="Kontrol Samping Player">
@@ -45,21 +49,15 @@
             <div class="sheet-scroll h-[calc(100%-25px)] overflow-y-auto px-5 pt-4 pb-0 scroll-smooth">
                 <section class="detail flex flex-col gap-4 items-stretch">
                     <div class="detail-header flex gap-4 items-center">
-                        <?php
-// Dapatkan URL gambar poster
-$custom_poster_url = get_post_meta(get_the_ID(), '_serial_video_poster_url', true);
-$poster_url = !empty($custom_poster_url) ? $custom_poster_url : get_the_post_thumbnail_url(get_the_ID(), 'medium');
-?>
-<img class="poster w-[110px] h-[148px] object-cover rounded-lg bg-zinc-800"
-     src="<?php echo esc_url($poster_url); ?>"
-     alt="Poster <?php the_title_attribute(); ?>"
-     width="110"
-     height="148"
-     loading="lazy" />
+                        <img class="poster w-[110px] h-[148px] object-cover rounded-lg bg-zinc-800"
+                             src="<?php echo esc_url($serial_data['poster']); ?>"
+                             alt="Poster <?php echo esc_attr($serial_data['title']); ?>"
+                             width="110"
+                             height="148"
+                             loading="lazy" />
                         <div class="meta">
-                            <h1 class="title text-lg sm:text-xl font-bold mb-1.5"><?php the_title(); ?></h1>
-                            <?php $episodes_meta = get_post_meta(get_the_ID(), '_serial_video_episodes', true); ?>
-                            <p class="sub text-sm text-gray-400">Tamat • <span id="totalEps"><?php echo !empty($episodes_meta) ? count($episodes_meta) : 0; ?></span> episode</p>
+                            <h1 class="title text-lg sm:text-xl font-bold mb-1.5"><?php echo esc_html($serial_data['title']); ?></h1>
+                            <p class="sub text-sm text-gray-400">Tamat • <span id="totalEps"><?php echo esc_html($serial_data['total']); ?></span> episode</p>
                         </div>
                     </div>
                     <div class="synopsis-container mt-4 w-full">
@@ -68,7 +66,9 @@ $poster_url = !empty($custom_poster_url) ? $custom_poster_url : get_the_post_thu
                         </button>
                         <div id="synopsisContent" class="synopsis-content grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out">
                             <div class="overflow-hidden">
-                                <div class="synopsis-text text-sm text-gray-400 leading-relaxed mt-3"><?php the_content(); ?></div>
+                                <div class="synopsis-text text-sm text-gray-400 leading-relaxed mt-3">
+                                    <?php echo $serial_data['synopsis']; // WP_kses_post can be used if you expect some safe HTML ?>
+                                </div>
                             </div>
                         </div>
                     </div>
