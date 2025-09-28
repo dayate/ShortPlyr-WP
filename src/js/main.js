@@ -102,20 +102,13 @@ import Player from 'xgplayer';
 
     xg = new Player({ id: XG_CONTAINER_ID, url, autoplay: true, width: '100%', height: '100%', lang: 'id', playsinline: true, fitVideoSize: 'contain', controls: { name: 'play' }, ignores: ['playbackRate', 'definition', 'fullscreen', 'pip', 'airplay', 'download', 'cssFullscreen', 'screenShot', 'miniProgress', 'timePreview', 'playNext'] });
     
-    // This event will hide the loader on the first load
     xg.on('loadedmetadata', hidePlayerLoader);
-    
     xg.on('play', () => { setPlayingUI(true); resetSideControlsTimer(); });
     xg.on('pause', () => { setPlayingUI(false); clearTimeout(sideControlsTimer); showSideControls(); });
     xg.on('ended', nextEpisode);
     xg.on('error', () => { 
       if (ovTitle) ovTitle.textContent = `Gagal memuat Ep ${currentEp}`;
-      // Also hide loader on error during subsequent loads
-      if (!isInitialLoad) {
-          // You might want a different error state here for subsequent loads
-      } else {
-          hidePlayerLoader();
-      }
+      if (isInitialLoad) hidePlayerLoader();
     });
 
     playerFull.addEventListener('mousemove', resetSideControlsTimer);
@@ -309,14 +302,33 @@ import Player from 'xgplayer';
       showError('Konfigurasi data tidak ditemukan.');
       return;
     }
-    const { api_url, nonce } = window.shortplyrData;
+    const { post_id, api_url, nonce } = window.shortplyrData;
+    const cacheKey = `shortplyr_data_${post_id}`;
 
+    // 1. Coba ambil dari sessionStorage
+    const cachedData = sessionStorage.getItem(cacheKey);
+    if (cachedData) {
+      console.log('Memuat data dari cache sessionStorage.');
+      const seriesData = JSON.parse(cachedData);
+      hidePlayerLoader(); // Langsung sembunyikan loader jika dari cache
+      populateUI(seriesData);
+      return;
+    }
+
+    // 2. Jika tidak ada cache, panggil API
     try {
       const response = await fetch(api_url, { headers: { 'X-WP-Nonce': nonce } });
       if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
       
       const seriesData = await response.json();
       if (seriesData.code === 'no_data') { showError(seriesData.message || 'Data tidak dapat diambil.'); return; }
+
+      // 3. Simpan data baru ke sessionStorage
+      try {
+        sessionStorage.setItem(cacheKey, JSON.stringify(seriesData));
+      } catch (e) {
+        console.error('Gagal menyimpan ke sessionStorage:', e);
+      }
 
       populateUI(seriesData);
 
