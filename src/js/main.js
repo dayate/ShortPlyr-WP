@@ -39,32 +39,30 @@ import Player from 'xgplayer';
   let sideControlsTimer = null;
   let SERIES_TITLE = '';
   let TOTAL = 0;
+  let isInitialLoad = true; // Flag for initial load
 
   const SHEET_TOP_Y = 5;
   const SHEET_MID_Y = 25;
   const SHEET_CLOSED_Y = 100;
+  const SWIPE_THRESHOLD_PX = 12;
+  const VELOCITY_TRIGGER = 0.3;
 
   /* ============================== HELPERS ================================ */
   const clamp = (n, min, max) => Math.max(min, Math.min(n, max));
 
   const hidePlayerLoader = () => {
-    if (playerLoader) {
+    // Only run this logic once on the initial load
+    if (playerLoader && isInitialLoad) {
       playerLoader.classList.add('opacity-0');
       setTimeout(() => {
         playerLoader.style.display = 'none';
       }, 500); // Match transition duration
-    }
-  };
-
-  const showPlayerLoader = () => {
-    if (playerLoader) {
-      playerLoader.style.display = 'flex';
-      setTimeout(() => playerLoader.classList.remove('opacity-0'), 10);
+      isInitialLoad = false; // Flip the flag so it doesn't run again
     }
   };
 
   const showError = (msg) => {
-    hidePlayerLoader();
+    hidePlayerLoader(); // Also hide loader on error
     if (titleEl) titleEl.textContent = msg;
     const playerContainer = $(`#${XG_CONTAINER_ID}`);
     if (playerContainer) {
@@ -102,17 +100,22 @@ import Player from 'xgplayer';
   const mountXG = (url) => {
     if (xg?.destroy) { try { xg.destroy(false); } catch {} }
 
-    showPlayerLoader();
-
     xg = new Player({ id: XG_CONTAINER_ID, url, autoplay: true, width: '100%', height: '100%', lang: 'id', playsinline: true, fitVideoSize: 'contain', controls: { name: 'play' }, ignores: ['playbackRate', 'definition', 'fullscreen', 'pip', 'airplay', 'download', 'cssFullscreen', 'screenShot', 'miniProgress', 'timePreview', 'playNext'] });
     
+    // This event will hide the loader on the first load
     xg.on('loadedmetadata', hidePlayerLoader);
+    
     xg.on('play', () => { setPlayingUI(true); resetSideControlsTimer(); });
     xg.on('pause', () => { setPlayingUI(false); clearTimeout(sideControlsTimer); showSideControls(); });
     xg.on('ended', nextEpisode);
     xg.on('error', () => { 
       if (ovTitle) ovTitle.textContent = `Gagal memuat Ep ${currentEp}`;
-      hidePlayerLoader();
+      // Also hide loader on error during subsequent loads
+      if (!isInitialLoad) {
+          // You might want a different error state here for subsequent loads
+      } else {
+          hidePlayerLoader();
+      }
     });
 
     playerFull.addEventListener('mousemove', resetSideControlsTimer);
@@ -180,11 +183,94 @@ import Player from 'xgplayer';
   
   // --- DRAG LOGIC (Unchanged) ---
   const drag = { active: false, startY: 0, lastY: 0, startSheetY: SHEET_CLOSED_Y, lastT: 0, velocity: 0, lockedByScroll: false, pointerId: null };
-  function dragStart(y, pointerId) { drag.active = true; drag.startY = y; drag.lastY = y; drag.startSheetY = currentY; drag.lastT = performance.now(); drag.velocity = 0; drag.pointerId = pointerId ?? null; sheet.style.transition = 'none'; }
-  function dragMove(y) { if (!drag.active) return; const now = performance.now(); const dy = y - drag.lastY; const dt = Math.max(1, now - drag.lastT); drag.velocity = dy / dt; const h = window.innerHeight; const delta = ((y - drag.startY) / h) * 100; const target = clamp(drag.startSheetY + delta, SHEET_TOP_Y, SHEET_CLOSED_Y); setY(target); drag.lastY = y; drag.lastT = now; }
-  function dragEnd() { if (!drag.active) return; sheet.style.transition = ''; const deltaPx = drag.lastY - drag.startY; const v = drag.velocity; let target = SHEET_MID_Y; if (v <= -VELOCITY_TRIGGER || deltaPx <= -SWIPE_THRESHOLD_PX) { target = SHEET_TOP_Y; } else if (v >= VELOCITY_TRIGGER || deltaPx >= SWIPE_THRESHOLD_PX) { target = SHEET_CLOSED_Y; } else { target = Math.abs(currentY - SHEET_TOP_Y) < Math.abs(currentY - SHEET_MID_Y) ? SHEET_TOP_Y : SHEET_MID_Y; } setY(target); isOpen = target !== SHEET_CLOSED_Y; drag.active = false; drag.lockedByScroll = false; drag.pointerId = null; }
-  sheet.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) return; const y = e.clientY; if (isOpen && currentY === SHEET_TOP_Y && sheetScroll && sheetScroll.scrollTop > 0) { drag.lockedByScroll = true; drag.startY = y; drag.pointerId = e.pointerId; return; } e.preventDefault(); sheet.setPointerCapture(e.pointerId); dragStart(y, e.pointerId); });
-  sheet.addEventListener('pointermove', (e) => { if (drag.lockedByScroll) { const dy = e.clientY - drag.startY; if (dy > SWIPE_THRESHOLD_PX && sheetScroll && sheetScroll.scrollTop <= 0) { drag.lockedByScroll = false; try { sheet.setPointerCapture(drag.pointerId ?? e.pointerId); } catch {} e.preventDefault(); dragStart(e.clientY, e.pointerId); } return; } dragMove(e.clientY); });
+  
+  function dragStart(y, pointerId) { 
+    drag.active = true; 
+    drag.startY = y; 
+    drag.lastY = y; 
+    drag.startSheetY = currentY; 
+    drag.lastT = performance.now(); 
+    drag.velocity = 0; 
+    drag.pointerId = pointerId ?? null; 
+    sheet.style.transition = 'none'; 
+  }
+  
+  function dragMove(y) { 
+    if (!drag.active) return; 
+    const now = performance.now(); 
+    const dy = y - drag.lastY;
+    const dt = Math.max(1, now - drag.lastT);
+    drag.velocity = dy / dt;
+    const h = window.innerHeight;
+    const delta = ((y - drag.startY) / h) * 100;
+    const target = clamp(drag.startSheetY + delta, SHEET_TOP_Y, SHEET_CLOSED_Y);
+    setY(target);
+    drag.lastY = y;
+    drag.lastT = now;
+  }
+
+  function dragEnd() {
+    if (!drag.active) return;
+    sheet.style.transition = '';
+    
+    const velocity = drag.velocity;
+    const isSwipeUp = velocity < -VELOCITY_TRIGGER;
+    const isSwipeDown = velocity > VELOCITY_TRIGGER;
+
+    if (isSwipeUp) {
+        if (currentY > SHEET_MID_Y) { // If it's mostly closed or at mid
+            setY(SHEET_MID_Y); // Open to middle
+        } else { // If it's between mid and top
+            setY(SHEET_TOP_Y); // Open to top
+        }
+        isOpen = true;
+    } else if (isSwipeDown) {
+        if (currentY < (SHEET_MID_Y - 5)) { // If it's mostly open (add buffer)
+            setY(SHEET_MID_Y); // Close to middle
+        } else { // If it's at mid or lower
+            closeSheet(); // Close completely
+        }
+    } else {
+        // No strong swipe, snap to the closest of the three states
+        const states = [SHEET_TOP_Y, SHEET_MID_Y, SHEET_CLOSED_Y];
+        const closestState = states.reduce((prev, curr) => {
+            return (Math.abs(curr - currentY) < Math.abs(prev - currentY) ? curr : prev);
+        });
+        setY(closestState);
+        isOpen = closestState !== SHEET_CLOSED_Y;
+    }
+
+    drag.active = false;
+    drag.lockedByScroll = false;
+    drag.pointerId = null;
+  }
+
+  sheet.addEventListener('pointerdown', (e) => { 
+    if (e.target.closest('button')) return;
+    const y = e.clientY;
+    if (isOpen && currentY === SHEET_TOP_Y && sheetScroll && sheetScroll.scrollTop > 0) { 
+      drag.lockedByScroll = true; 
+      drag.startY = y; 
+      drag.pointerId = e.pointerId; 
+      return; 
+    } 
+    e.preventDefault(); 
+    sheet.setPointerCapture(e.pointerId); 
+    dragStart(y, e.pointerId); 
+  });
+  sheet.addEventListener('pointermove', (e) => { 
+    if (drag.lockedByScroll) { 
+      const dy = e.clientY - drag.startY;
+      if (dy > SWIPE_THRESHOLD_PX && sheetScroll && sheetScroll.scrollTop <= 0) { 
+        drag.lockedByScroll = false; 
+        try { sheet.setPointerCapture(drag.pointerId ?? e.pointerId); } catch {} 
+        e.preventDefault(); 
+        dragStart(e.clientY, e.pointerId); 
+      } 
+      return; 
+    } 
+    dragMove(e.clientY); 
+  });
   sheet.addEventListener('pointerup', dragEnd);
   sheet.addEventListener('pointercancel', dragEnd);
   // --- END DRAG LOGIC ---

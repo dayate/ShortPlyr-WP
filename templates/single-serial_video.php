@@ -51,7 +51,7 @@
             <header id="sheetHandle" class="sheet-handle sticky top-0 flex justify-center items-center h-[25px] pt-2.5" title="Tarik untuk memperbesar/menutup" aria-label="Tarik untuk memperbesar/menutup">
                 <svg viewBox="0 0 24 24" width="100" height="40" aria-hidden="true"><path d="M4 12h16" stroke="#5b616a" stroke-width="3" stroke-linecap="round" /></svg>
             </header>
-            <div class="sheet-scroll h-[calc(100%-25px)] overflow-y-auto px-5 pt-4 pb-0 scroll-smooth">
+            <div class="sheet-scroll no-scrollbar h-[calc(100%-25px)] overflow-y-auto px-5 pt-4 pb-0 scroll-smooth">
                 <section class="detail flex flex-col gap-4 items-stretch">
                     <div class="detail-header flex gap-4 items-center">
                         <img class="poster w-[110px] h-[148px] object-cover rounded-lg bg-zinc-800"
