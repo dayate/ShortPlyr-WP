@@ -1,8 +1,39 @@
+/* Custom Loader from loading.scss */
+.loader {
+  --duration: 1.5s;
+  width: 50px;
+  height: 50px;
+}
+
+.loader svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.loader svg rect {
+  fill: none;
+  stroke: #4a5568; /* Gray-600 */
+  stroke-width: 8;
+  stroke-linejoin: miter;
+  stroke-linecap: butt;
+  stroke-dasharray: 192 64;
+  stroke-dashoffset: 0;
+  animation: pathRect var(--duration) cubic-bezier(0.785, 0.135, 0.15, 0.86)
+    infinite;
+}
+
+@keyframes pathRect {
+  100% {
+    stroke-dashoffset: -256;
+  }
+}
+/* End of Custom Loader */
+
 /* src/css/input.css */
 
 /* 1. Impor utama untuk Tailwind CSS v4 */
-@import "tailwindcss";
-
+@import 'tailwindcss';
 
 /* 1. Definisi Font Montserrat (Self-Hosted) */
 /* Montserrat Regular */
@@ -24,8 +55,8 @@
 }
 
 /* 2. Impor CSS untuk XGPlayer */
-@import "../../assets/css/xgplayer/index.min.css";
-@import "../../assets/css/remixicon/remixicon.css";
+@import '../../assets/css/xgplayer/index.min.css';
+@import '../../assets/css/remixicon/remixicon.css';
 
 /*
  * 3. Kode Remixicon dengan Path Font yang Sudah Diperbaiki
@@ -35,23 +66,28 @@
  */
 
 @font-face {
-  font-family: "remixicon";
-  src: url("remixicon/remixicon.eot?t=1723129184542"); /* IE9 Compat Modes */
-  src: url("remixicon/remixicon.eot?t=1723129184542#iefix") format("embedded-opentype"), /* IE6-IE8 */
-    url("remixicon/remixicon.woff2?t=1723129184542") format("woff2"), /* Super Modern Browsers */
-    url("remixicon/remixicon.woff?t=1723129184542") format("woff"), /* Modern Browsers */
-    url("remixicon/remixicon.ttf?t=1723129184542") format("truetype"), /* Safari, Android, iOS */
-    url("remixicon/remixicon.svg?t=1723129184542#remixicon") format("svg"); /* Legacy iOS */
+  font-family: 'remixicon';
+  src: url('remixicon/remixicon.eot?t=1723129184542'); /* IE9 Compat Modes */
+  src:
+    url('remixicon/remixicon.eot?t=1723129184542#iefix')
+      format('embedded-opentype'),
+    /* IE6-IE8 */ url('remixicon/remixicon.woff2?t=1723129184542')
+      format('woff2'),
+    /* Super Modern Browsers */ url('remixicon/remixicon.woff?t=1723129184542')
+      format('woff'),
+    /* Modern Browsers */ url('remixicon/remixicon.ttf?t=1723129184542')
+      format('truetype'),
+    /* Safari, Android, iOS */
+      url('remixicon/remixicon.svg?t=1723129184542#remixicon') format('svg'); /* Legacy iOS */
   font-display: swap; /* Tambahan untuk performa */
 }
 
 .ri {
-  font-family: "remixicon" !important;
+  font-family: 'remixicon' !important;
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
 
 /* 0. Pengaturan Font Dasar */
 body {
@@ -63,19 +99,6 @@ body {
   transform: translateY(var(--sheet-y));
   transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
   will-change: transform;
-}
-
-/* 2. Animasi Shimmer untuk Skeleton Loader */
-.sk-bar,
-.sk-chip {
-  background: linear-gradient(90deg, #1f2328 0%, #2a2f36 50%, #1f2328 100%);
-  background-size: 200%;
-  animation: shimmer 1.2s linear infinite;
-}
-
-@keyframes shimmer {
-  0% { background-position: 0% 0; }
-  100% { background-position: 200% 0; }
 }
 
 /* 3. Grid Episode Dinamis */
@@ -99,10 +122,10 @@ body {
 }
 
 /* Perbaikan untuk tombol sinopsis */
-#synopsisToggle[aria-expanded="true"] i {
+#synopsisToggle[aria-expanded='true'] i {
   transform: rotate(180deg);
 }
 
-#synopsisContent[aria-expanded="true"] {
+#synopsisContent[aria-expanded='true'] {
   grid-template-rows: 1fr;
 }

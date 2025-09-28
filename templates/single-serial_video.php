@@ -1,6 +1,6 @@
 <?php
-// Panggil fungsi helper dari functions.php untuk mengambil semua data serial.
-$serial_data = get_processed_serial_data(get_the_ID());
+// Template ini sekarang hanya sebagai kerangka (skeleton).
+// Data akan dimuat secara asynchronous oleh main.js melalui REST API.
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -15,9 +15,14 @@ $serial_data = get_processed_serial_data(get_the_ID());
 
     <main class="wrap mx-auto min-h-dvh relative overflow-hidden bg-[#0f1114] max-w-[720px] fullscreen:max-w-full">
         <section class="player-full relative w-full h-dvh bg-black overflow-hidden" aria-label="Video Player">
-            <div id="playerSkeleton" class="absolute inset-0 flex items-end justify-between pointer-events-none bg-gradient-to-t from-black/60 via-black/20 to-white/5" aria-hidden="false">
-                <div class="sk-bar h-[10px] w-3/5 m-6 rounded-full"></div>
-                <div class="sk-chip h-[34px] w-[90px] m-4 rounded-lg"></div>
+            
+            <div id="player-loader" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black transition-opacity duration-500">
+                <div class="loader">
+                  <svg viewBox="0 0 80 80">
+                    <rect x="8" y="8" width="64" height="64"></rect>
+                  </svg>
+                </div>
+                <p class="text-white mt-4 text-sm">Memuat Data...</p>
             </div>
 
             <div id="xgplayer" class="xgplayer-container absolute inset-0 w-full h-full bg-black overflow-hidden" aria-label="xgplayer"></div>
@@ -50,14 +55,14 @@ $serial_data = get_processed_serial_data(get_the_ID());
                 <section class="detail flex flex-col gap-4 items-stretch">
                     <div class="detail-header flex gap-4 items-center">
                         <img class="poster w-[110px] h-[148px] object-cover rounded-lg bg-zinc-800"
-                             src="<?php echo esc_url($serial_data['poster']); ?>"
-                             alt="Poster <?php echo esc_attr($serial_data['title']); ?>"
+                             src="" 
+                             alt=""
                              width="110"
                              height="148"
                              loading="lazy" />
                         <div class="meta">
-                            <h1 class="title text-lg sm:text-xl font-bold mb-1.5"><?php echo esc_html($serial_data['title']); ?></h1>
-                            <p class="sub text-sm text-gray-400">Tamat • <span id="totalEps"><?php echo esc_html($serial_data['total']); ?></span> episode</p>
+                            <h1 class="title text-lg sm:text-xl font-bold mb-1.5"></h1>
+                            <p class="sub text-sm text-gray-400">Tamat • <span id="totalEps"></span> episode</p>
                         </div>
                     </div>
                     <div class="synopsis-container mt-4 w-full">
@@ -67,7 +72,6 @@ $serial_data = get_processed_serial_data(get_the_ID());
                         <div id="synopsisContent" class="synopsis-content grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out">
                             <div class="overflow-hidden">
                                 <div class="synopsis-text text-sm text-gray-400 leading-relaxed mt-3">
-                                    <?php echo $serial_data['synopsis']; // WP_kses_post can be used if you expect some safe HTML ?>
                                 </div>
                             </div>
                         </div>
