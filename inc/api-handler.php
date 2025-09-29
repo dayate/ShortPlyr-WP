@@ -53,8 +53,8 @@ function get_processed_serial_data($post_id) {
             // Catat error jika API gagal.
             error_log('ShortPlyr API Error: ' . (is_wp_error($response) ? $response->get_error_message() : 'HTTP Code: ' . wp_remote_retrieve_response_code($response)));
         }
-    } 
-    
+    }
+
     // Jika pengambilan data dari API gagal atau tidak ada info API, gunakan data manual.
     if (empty($episodes_data)) {
         $manual_episodes = get_post_meta($post_id, '_serial_video_episodes', true);
@@ -122,6 +122,21 @@ add_action('save_post', 'shortplyr_delete_api_cache_on_save');
 // =============================================================================
 
 /**
+ * Fungsi untuk memeriksa izin akses ke REST API endpoint.
+ * Hanya permintaan dengan nonce yang valid yang diizinkan.
+ *
+ * @param WP_REST_Request $request Request object.
+ * @return bool|WP_Error True jika diizinkan, WP_Error jika ditolak.
+ */
+function shortplyr_rest_permission_check(WP_REST_Request $request) {
+    $nonce = $request->get_header('x-wp-nonce');
+    if (!wp_verify_nonce($nonce, 'wp_rest')) {
+        return new WP_Error('rest_forbidden', 'Nonce tidak valid.', ['status' => 401]);
+    }
+    return true;
+}
+
+/**
  * Mendaftarkan endpoint REST API kustom.
  * Endpoint: /wp-json/shortplyr/v1/serial/{id}
  */
@@ -129,7 +144,7 @@ function shortplyr_register_rest_endpoint() {
     register_rest_route('shortplyr/v1', '/serial/(?P<id>\d+)', [
         'methods'             => 'GET',
         'callback'            => 'shortplyr_get_serial_data_for_rest',
-        'permission_callback' => '__return_true', // Bisa diakses publik
+        'permission_callback' => 'shortplyr_rest_permission_check', // Menggunakan fungsi permission check
         'args'                => [
             'id' => [
                 'validate_callback' => function($param, $request, $key) {
@@ -149,7 +164,7 @@ add_action('rest_api_init', 'shortplyr_register_rest_endpoint');
  */
 function shortplyr_get_serial_data_for_rest(WP_REST_Request $request) {
     $post_id = absint($request['id']);
-    
+
     // Verifikasi apakah post ada dan merupakan tipe yang benar
     $post = get_post($post_id);
     if (!$post || $post->post_type !== 'serial_video') {
