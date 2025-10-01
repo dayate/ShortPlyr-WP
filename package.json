@@ -30,6 +30,7 @@
   "homepage": "https://github.com/dayate/ShortPlyr-WP#readme",
   "dependencies": {
     "@tailwindcss/cli": "^4.1.13",
+    "heic2any": "^0.0.4",
     "xgplayer": "^3.0.13"
   },
   "devDependencies": {

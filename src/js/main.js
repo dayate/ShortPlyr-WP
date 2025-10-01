@@ -1,6 +1,7 @@
 // 1. Impor pustaka xgplayer dari package
-import Player from 'xgplayer';
 
+import Player from 'xgplayer';
+import heic2any from 'heic2any';
 (function () {
   /* =============================== DOM ===================================== */
   const $ = (s, r = document) => r.querySelector(s);

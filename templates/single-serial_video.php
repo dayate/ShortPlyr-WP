@@ -8,7 +8,6 @@
     <meta charset="<?php bloginfo( 'charset' ); ?>" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <?php wp_head(); ?>
-    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 </head>
 <body <?php body_class('bg-black text-gray-200'); ?>>
 
