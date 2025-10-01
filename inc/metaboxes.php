@@ -68,26 +68,51 @@ function serial_video_save_adsterra_meta_box($post_id) {
 add_action('save_post_serial_video', 'serial_video_save_adsterra_meta_box');
 
 // =============================================================================
-// BAGIAN 2.6: META BOX UNTUK POSTER KUSTOM
+// BAGIAN 2.6: META BOX UNTUK PENGATURAN POSTER (DIUBAH)
 // =============================================================================
-function serial_video_poster_url_meta_box() { add_meta_box('serial_video_poster_url_box', 'URL Poster Kustom', 'serial_video_poster_url_meta_box_html', 'serial_video', 'side', 'default'); }
-add_action('add_meta_boxes', 'serial_video_poster_url_meta_box');
+function serial_video_poster_settings_meta_box() { add_meta_box('serial_video_poster_settings_box', 'Pengaturan Poster', 'serial_video_poster_settings_meta_box_html', 'serial_video', 'side', 'default'); }
+add_action('add_meta_boxes', 'serial_video_poster_settings_meta_box');
 
-function serial_video_poster_url_meta_box_html($post) {
+function serial_video_poster_settings_meta_box_html($post) {
+    // Ambil data yang ada
     $poster_url = get_post_meta($post->ID, '_serial_video_poster_url', true);
-    wp_nonce_field('serial_video_poster_url_nonce_action', 'serial_video_poster_url_nonce');
+    $poster_source = get_post_meta($post->ID, '_poster_source_choice', true) ?: 'api'; // Default ke 'api'
+
+    // Nonce untuk keamanan
+    wp_nonce_field('serial_video_poster_settings_nonce_action', 'serial_video_poster_settings_nonce');
     ?>
-    <p><label for="poster_url"><strong>URL Gambar Poster:</strong></label><br><input type="url" id="poster_url" name="poster_url" value="<?php echo esc_url($poster_url); ?>" class="widefat" placeholder="https://.../poster.jpg" /><small>Jika kosong, akan pakai "Gambar Poster" (Featured Image).</small></p>
+    <div class="poster-settings-wrapper">
+        <p><strong>Pilih Sumber Poster:</strong></p>
+        <label><input type="radio" name="_poster_source_choice" value="api" <?php checked($poster_source, 'api'); ?>> Gunakan Poster dari API</label><br>
+        <label><input type="radio" name="_poster_source_choice" value="metabox" <?php checked($poster_source, 'metabox'); ?>> Gunakan URL Kustom di Bawah</label><br>
+        <label><input type="radio" name="_poster_source_choice" value="featured" <?php checked($poster_source, 'featured'); ?>> Gunakan Featured Image</label>
+
+        <hr style="margin: 15px 0;">
+
+        <p><label for="poster_url"><strong>URL Poster Kustom:</strong></label><br>
+        <input type="url" id="poster_url" name="poster_url" value="<?php echo esc_url($poster_url); ?>" class="widefat" placeholder="https://.../poster.jpg" />
+        <small>Hanya digunakan jika "Gunakan URL Kustom" dipilih.</small></p>
+    </div>
     <?php
 }
 
-function serial_video_save_poster_url_meta_box($post_id) {
-    if (!isset($_POST['serial_video_poster_url_nonce']) || !wp_verify_nonce($_POST['serial_video_poster_url_nonce'], 'serial_video_poster_url_nonce_action')) return;
+function serial_video_save_poster_settings_meta_box($post_id) {
+    if (!isset($_POST['serial_video_poster_settings_nonce']) || !wp_verify_nonce($_POST['serial_video_poster_settings_nonce'], 'serial_video_poster_settings_nonce_action')) return;
     if (!current_user_can('edit_post', $post_id)) return;
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
-    if (isset($_POST['poster_url'])) { update_post_meta($post_id, '_serial_video_poster_url', esc_url_raw($_POST['poster_url'])); }
+
+    // Simpan pilihan sumber poster
+    if (isset($_POST['_poster_source_choice'])) {
+        update_post_meta($post_id, '_poster_source_choice', sanitize_text_field($_POST['_poster_source_choice']));
+    }
+
+    // Simpan URL poster kustom
+    if (isset($_POST['poster_url'])) {
+        update_post_meta($post_id, '_serial_video_poster_url', esc_url_raw($_POST['poster_url']));
+    }
 }
-add_action('save_post_serial_video', 'serial_video_save_poster_url_meta_box');
+add_action('save_post_serial_video', 'serial_video_save_poster_settings_meta_box');
+
 
 // =============================================================================
 // BAGIAN 2.7: META BOX UNTUK INPUT API (UTAMA)

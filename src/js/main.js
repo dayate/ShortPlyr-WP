@@ -288,23 +288,18 @@ import Player from 'xgplayer';
 
     if (isSwipeUp) {
       if (currentY > SHEET_MID_Y) {
-        // If it's mostly closed or at mid
-        setY(SHEET_MID_Y); // Open to middle
+        setY(SHEET_MID_Y);
       } else {
-        // If it's between mid and top
-        setY(SHEET_TOP_Y); // Open to top
+        setY(SHEET_TOP_Y);
       }
       isOpen = true;
     } else if (isSwipeDown) {
       if (currentY < SHEET_MID_Y - 5) {
-        // If it's mostly open (add buffer)
-        setY(SHEET_MID_Y); // Close to middle
+        setY(SHEET_MID_Y);
       } else {
-        // If it's at mid or lower
-        closeSheet(); // Close completely
+        closeSheet();
       }
     } else {
-      // No strong swipe, snap to the closest of the three states
       const states = [SHEET_TOP_Y, SHEET_MID_Y, SHEET_CLOSED_Y];
       const closestState = states.reduce((prev, curr) => {
         return Math.abs(curr - currentY) < Math.abs(prev - currentY)
@@ -406,9 +401,6 @@ import Player from 'xgplayer';
   /**
    * Fungsi untuk memproses dan menampilkan poster, termasuk konversi HEIC/HEIF
    */
-  /**
-   * Fungsi untuk memproses dan menampilkan poster, termasuk konversi HEIC/HEIF
-   */
   async function processAndDisplayPoster(url, container, altText) {
     if (!url) {
       container.src = '';
@@ -427,23 +419,19 @@ import Player from 'xgplayer';
           throw new Error(`HTTP error! status: ${response.status}`);
         const blob = await response.blob();
 
-        // Mengubah blob HEIC menjadi blob JPEG
         const conversionResult = await heic2any({
           blob: blob,
           toType: 'image/jpeg',
         });
 
-        // Membuat URL objek sementara dari blob JPEG dan menetapkannya ke src
         container.src = URL.createObjectURL(conversionResult);
         container.alt = altText;
       } else {
-        // Jika formatnya sudah JPG/PNG, langsung gunakan URL asli
         container.src = url;
         container.alt = altText;
       }
     } catch (error) {
       console.error('Client-side image processing error:', error);
-      // Jika terjadi error (misal: CORS), tampilkan URL asli sebagai fallback
       container.src = url;
       container.alt = 'Error memproses gambar. Menampilkan gambar asli.';
     }
@@ -457,27 +445,26 @@ import Player from 'xgplayer';
     TOTAL = Number(seriesData.total) || 0;
     EPISODES = Array.isArray(seriesData.episodes) ? seriesData.episodes : [];
 
-    // --- LOGIKA PRIORITAS POSTER YANG BARU ---
-    const bookDetails = seriesData.book_details;
-    const backupUrls = seriesData.backup_urls;
+    // ==========================================================
+    // AWAL BLOK LOGIKA POSTER BARU (DIUBAH DAN DISIMPLIFIKASI)
+    // ==========================================================
+    const posterUrl = seriesData.poster_url;
 
-    let posterUrl = null;
-
-    if (bookDetails && bookDetails.thumb_url) {
-      posterUrl = bookDetails.thumb_url; // Prioritas 1
-      await processAndDisplayPoster(posterUrl, posterImg, SERIES_TITLE);
-    } else if (backupUrls && backupUrls.metabox_url) {
-      posterUrl = backupUrls.metabox_url; // Prioritas 2
-      await processAndDisplayPoster(posterUrl, posterImg, SERIES_TITLE);
-    } else if (backupUrls && backupUrls.featured_image_url) {
-      posterUrl = backupUrls.featured_image_url; // Prioritas 3 (tanpa konversi)
-      posterImg.src = posterUrl;
-      posterImg.alt = `Poster ${SERIES_TITLE}`;
+    if (posterUrl) {
+      // Cukup panggil fungsi processAndDisplayPoster dengan satu URL yang sudah pasti
+      await processAndDisplayPoster(
+        posterUrl,
+        posterImg,
+        `Poster ${SERIES_TITLE}`,
+      );
     } else {
+      // Tangani jika tidak ada poster sama sekali
       posterImg.src = '';
       posterImg.alt = 'Poster tidak tersedia';
     }
-    // --- AKHIR LOGIKA PRIORITAS POSTER ---
+    // ==========================================================
+    // AKHIR BLOK LOGIKA POSTER BARU
+    // ==========================================================
 
     if (titleEl) titleEl.textContent = SERIES_TITLE;
     if (totalEpsEl) totalEpsEl.textContent = TOTAL;
@@ -506,17 +493,15 @@ import Player from 'xgplayer';
     const { post_id, api_url, nonce } = window.shortplyrData;
     const cacheKey = `shortplyr_data_${post_id}`;
 
-    // 1. Coba ambil dari sessionStorage
     const cachedData = sessionStorage.getItem(cacheKey);
     if (cachedData) {
       console.log('Memuat data dari cache sessionStorage.');
       const seriesData = JSON.parse(cachedData);
-      hidePlayerLoader(); // Langsung sembunyikan loader jika dari cache
+      hidePlayerLoader();
       populateUI(seriesData);
       return;
     }
 
-    // 2. Jika tidak ada cache, panggil API
     try {
       const response = await fetch(api_url, {
         headers: {
@@ -533,7 +518,6 @@ import Player from 'xgplayer';
         return;
       }
 
-      // 3. Simpan data baru ke sessionStorage
       try {
         sessionStorage.setItem(cacheKey, JSON.stringify(seriesData));
       } catch (e) {
