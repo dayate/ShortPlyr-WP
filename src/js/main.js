@@ -404,17 +404,81 @@ import Player from 'xgplayer';
   };
 
   /**
-   * Mengisi kerangka UI dengan data dari API.
+   * Fungsi untuk memproses dan menampilkan poster, termasuk konversi HEIC/HEIF
    */
-  const populateUI = (seriesData) => {
+  /**
+   * Fungsi untuk memproses dan menampilkan poster, termasuk konversi HEIC/HEIF
+   */
+  async function processAndDisplayPoster(url, container, altText) {
+    if (!url) {
+      container.src = '';
+      container.alt = 'Poster tidak tersedia';
+      return;
+    }
+
+    try {
+      // Ambil hanya bagian path dari URL untuk mengabaikan query string (?rk3s=...)
+      const pathname = new URL(url).pathname;
+
+      // Cek apakah path tersebut berakhiran .heic atau .heif
+      if (pathname.endsWith('.heic') || pathname.endsWith('.heif')) {
+        const response = await fetch(url);
+        if (!response.ok)
+          throw new Error(`HTTP error! status: ${response.status}`);
+        const blob = await response.blob();
+
+        // Mengubah blob HEIC menjadi blob JPEG
+        const conversionResult = await heic2any({
+          blob: blob,
+          toType: 'image/jpeg',
+        });
+
+        // Membuat URL objek sementara dari blob JPEG dan menetapkannya ke src
+        container.src = URL.createObjectURL(conversionResult);
+        container.alt = altText;
+      } else {
+        // Jika formatnya sudah JPG/PNG, langsung gunakan URL asli
+        container.src = url;
+        container.alt = altText;
+      }
+    } catch (error) {
+      console.error('Client-side image processing error:', error);
+      // Jika terjadi error (misal: CORS), tampilkan URL asli sebagai fallback
+      container.src = url;
+      container.alt = 'Error memproses gambar. Menampilkan gambar asli.';
+    }
+  }
+  /**
+   * Mengisi kerangka UI dengan data dari API.
+   * Logika prioritas poster diimplementasikan di sini.
+   */
+  const populateUI = async (seriesData) => {
     SERIES_TITLE = seriesData.title || 'Tanpa Judul';
     TOTAL = Number(seriesData.total) || 0;
     EPISODES = Array.isArray(seriesData.episodes) ? seriesData.episodes : [];
 
-    if (posterImg) {
-      posterImg.src = seriesData.poster;
+    // --- LOGIKA PRIORITAS POSTER YANG BARU ---
+    const bookDetails = seriesData.book_details;
+    const backupUrls = seriesData.backup_urls;
+
+    let posterUrl = null;
+
+    if (bookDetails && bookDetails.thumb_url) {
+      posterUrl = bookDetails.thumb_url; // Prioritas 1
+      await processAndDisplayPoster(posterUrl, posterImg, SERIES_TITLE);
+    } else if (backupUrls && backupUrls.metabox_url) {
+      posterUrl = backupUrls.metabox_url; // Prioritas 2
+      await processAndDisplayPoster(posterUrl, posterImg, SERIES_TITLE);
+    } else if (backupUrls && backupUrls.featured_image_url) {
+      posterUrl = backupUrls.featured_image_url; // Prioritas 3 (tanpa konversi)
+      posterImg.src = posterUrl;
       posterImg.alt = `Poster ${SERIES_TITLE}`;
+    } else {
+      posterImg.src = '';
+      posterImg.alt = 'Poster tidak tersedia';
     }
+    // --- AKHIR LOGIKA PRIORITAS POSTER ---
+
     if (titleEl) titleEl.textContent = SERIES_TITLE;
     if (totalEpsEl) totalEpsEl.textContent = TOTAL;
     if (synopsisTextEl) synopsisTextEl.innerHTML = seriesData.synopsis;

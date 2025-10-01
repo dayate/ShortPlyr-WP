@@ -28,13 +28,25 @@ function get_processed_serial_data($post_id) {
         // Ambil URL API dari theme settings, dengan fallback ke URL lokal.
         $api_url = get_option('shortplyr_melolo_api_url', 'http://127.0.0.1:8000/api/search-and-get-details');
 
+        // Ambil API Key dari theme settings
+        $api_key = get_option('shortplyr_melolo_api_key', '');
+
         $full_api_url = add_query_arg([
             'query' => urlencode($api_query),
             'book_id' => urlencode($api_book_id),
             'book_name' => urlencode($api_book_name)
         ], $api_url);
 
-        $response = wp_remote_get($full_api_url, ['timeout' => 20]);
+        // Tambahkan header X-API-Key jika API key tersedia
+        $headers = [];
+        if (!empty($api_key)) {
+            $headers['X-API-Key'] = $api_key;
+        }
+
+        $response = wp_remote_get($full_api_url, [
+            'timeout' => 20,
+            'headers' => $headers // Sertakan headers dalam permintaan
+        ]);
 
         if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
             $api_body = json_decode(wp_remote_retrieve_body($response), true);
@@ -85,9 +97,9 @@ function get_processed_serial_data($post_id) {
         }
     }
 
-    // Logika untuk poster: prioritaskan URL kustom, lalu featured image.
+    // Logika untuk poster diubah untuk mengirim semua opsi ke klien
     $custom_poster_url = get_post_meta($post_id, '_serial_video_poster_url', true);
-    $poster_url = !empty($custom_poster_url) ? $custom_poster_url : get_the_post_thumbnail_url($post_id, 'medium');
+    $featured_image_url = get_the_post_thumbnail_url($post_id, 'full');
 
     // Finalisasi judul dan sinopsis.
     $final_title = !empty($book_details['book_name']) ? $book_details['book_name'] : get_the_title();
@@ -97,10 +109,14 @@ function get_processed_serial_data($post_id) {
     $final_data = [
         'id'       => 'series_' . $post_id,
         'title'    => $final_title,
-        'poster'   => $poster_url,
         'total'    => $total_episodes,
         'synopsis' => $final_synopsis,
-        'episodes' => array_values($episodes_data)
+        'episodes' => array_values($episodes_data),
+        'book_details' => $book_details,
+        'backup_urls' => [
+            'metabox_url' => $custom_poster_url,
+            'featured_image_url' => $featured_image_url,
+        ]
     ];
 
     // Simpan data final ke dalam cache (transient) selama 1 jam.

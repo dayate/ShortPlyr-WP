@@ -8,6 +8,7 @@
     <meta charset="<?php bloginfo( 'charset' ); ?>" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <?php wp_head(); ?>
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 </head>
 <body <?php body_class('bg-black text-gray-200'); ?>>
 
@@ -15,7 +16,7 @@
 
     <main class="wrap mx-auto min-h-dvh relative overflow-hidden bg-[#0f1114] max-w-[720px] fullscreen:max-w-full">
         <section class="player-full relative w-full h-dvh bg-black overflow-hidden" aria-label="Video Player">
-            
+
             <div id="player-loader" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black transition-opacity duration-500">
                 <div class="loader">
                   <svg viewBox="0 0 80 80">
@@ -55,7 +56,7 @@
                 <section class="detail flex flex-col gap-4 items-stretch">
                     <div class="detail-header flex gap-4 items-center">
                         <img class="poster w-[110px] h-[148px] object-cover rounded-lg bg-zinc-800"
-                             src="" 
+                             src=""
                              alt=""
                              width="110"
                              height="148"

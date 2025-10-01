@@ -22,6 +22,9 @@ function shortplyr_settings_init() {
     // Register a setting to store our API URL.
     register_setting('shortplyr_settings_group', 'shortplyr_melolo_api_url');
 
+    // Register a setting to store our API Key.
+    register_setting('shortplyr_settings_group', 'shortplyr_melolo_api_key');
+
     // Add a section to the settings page.
     add_settings_section(
         'shortplyr_api_section',
@@ -38,12 +41,21 @@ function shortplyr_settings_init() {
         'shortplyr-settings',
         'shortplyr_api_section'
     );
+
+    // Add the field for the API Key.
+    add_settings_field(
+        'shortplyr_melolo_api_key_field',
+        'MeloloAPI Key',
+        'shortplyr_melolo_api_key_field_html',
+        'shortplyr-settings',
+        'shortplyr_api_section'
+    );
 }
 add_action('admin_init', 'shortplyr_settings_init');
 
 // 3. Callbacks to render the HTML for the page and fields.
 function shortplyr_api_section_callback() {
-    echo '<p>Enter the base URL for the MeloloAPI. This will be used to fetch episode data.</p>';
+    echo '<p>Enter the base URL and API Key for the MeloloAPI. This will be used to fetch episode data.</p>';
 }
 
 function shortplyr_melolo_api_url_field_html() {
@@ -51,6 +63,14 @@ function shortplyr_melolo_api_url_field_html() {
     ?>
     <input type="url" name="shortplyr_melolo_api_url" id="shortplyr_melolo_api_url" value="<?php echo esc_attr($api_url); ?>" class="regular-text">
     <p class="description">The default value is the local development endpoint.</p>
+    <?php
+}
+
+function shortplyr_melolo_api_key_field_html() {
+    $api_key = get_option('shortplyr_melolo_api_key', '');
+    ?>
+    <input type="text" name="shortplyr_melolo_api_key" id="shortplyr_melolo_api_key" value="<?php echo esc_attr($api_key); ?>" class="regular-text">
+    <p class="description">Enter your API key here.</p>
     <?php
 }
 
