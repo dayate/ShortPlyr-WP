@@ -20,6 +20,7 @@ import { getDOMElements, populateUI } from './ui.js';
 
   /* =============================== DOM ===================================== */
   const elements = getDOMElements();
+  const postId = window.shortplyrData?.post_id;
 
   /* ============================== CALLBACKS ================================ */
   const onEpisodeChange = () => {
@@ -38,11 +39,19 @@ import { getDOMElements, populateUI } from './ui.js';
     onEpisodeChange,
     onLoadedMetadata,
     onPlayerError,
-    onEnded: () => nextEpisode(state, elements, callbacks),
+    onEnded: () => nextEpisode(state, elements, callbacks, postId),
   };
 
   /* ============================== Init ===================================== */
   document.addEventListener('DOMContentLoaded', () => {
+    // Read saved progress from localStorage
+    if (postId) {
+        const savedEp = localStorage.getItem(`shortplyr_progress_${postId}`);
+        if (savedEp) {
+            state.currentEp = parseInt(savedEp, 10);
+        }
+    }
+
     initSheet(elements.sheet, elements.openBtn, elements.sheetScroll);
     initFullscreen(elements.fullBtn, elements.wrap);
     initLongPress(
@@ -51,8 +60,8 @@ import { getDOMElements, populateUI } from './ui.js';
       elements.playbackSpeedText
     );
 
-    elements.prevEpBtn.onclick = () => prevEpisode(state, elements, callbacks);
-    elements.nextEpBtn.onclick = () => nextEpisode(state, elements, callbacks);
+    elements.prevEpBtn.onclick = () => prevEpisode(state, elements, callbacks, postId);
+    elements.nextEpBtn.onclick = () => nextEpisode(state, elements, callbacks, postId);
 
     elements.synopsisToggle?.addEventListener('click', () => {
       const isExpanded =
@@ -62,7 +71,7 @@ import { getDOMElements, populateUI } from './ui.js';
     });
 
     const wrappedPopulateUI = (seriesData) => {
-        populateUI(seriesData, elements, state, (n) => handleEpisodeSelection(n, state, elements, callbacks));
+        populateUI(seriesData, elements, state, (n) => handleEpisodeSelection(n, state, elements, callbacks, postId));
     }
 
     fetchDataAndInitialize(wrappedPopulateUI);

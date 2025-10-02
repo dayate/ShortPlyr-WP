@@ -72,7 +72,7 @@ const mountXG = (url, elements, state, callbacks) => {
   resetSideControlsTimer(elements.sideControls);
 };
 
-export const setEpisode = (n, state, elements, callbacks) => {
+export const setEpisode = (n, state, elements, callbacks, postId) => {
   if (!state.TOTAL) return;
   state.currentEp = clamp(n, 1, state.TOTAL);
   setOverlay(elements.ovTitle, state.currentEp, state.SERIES_TITLE);
@@ -93,9 +93,14 @@ export const setEpisode = (n, state, elements, callbacks) => {
   mountXG(src, elements, state, callbacks);
   setPlayingUI(false, elements.overlayHint);
   callbacks.onEpisodeChange();
+
+  // Save progress to localStorage
+  if (postId) {
+      localStorage.setItem(`shortplyr_progress_${postId}`, state.currentEp);
+  }
 };
 
-export const handleEpisodeSelection = (n, state, elements, callbacks) => {
+export const handleEpisodeSelection = (n, state, elements, callbacks, postId) => {
   const targetEp = clamp(n, 1, state.TOTAL);
   if (!targetEp) return;
   const episodeData = state.EPISODES[targetEp - 1];
@@ -110,11 +115,11 @@ export const handleEpisodeSelection = (n, state, elements, callbacks) => {
       return;
     }
   }
-  setEpisode(targetEp, state, elements, callbacks);
+  setEpisode(targetEp, state, elements, callbacks, postId);
 };
 
-export const nextEpisode = (state, elements, callbacks) => handleEpisodeSelection(state.currentEp + 1, state, elements, callbacks);
-export const prevEpisode = (state, elements, callbacks) => handleEpisodeSelection(state.currentEp - 1, state, elements, callbacks);
+export const nextEpisode = (state, elements, callbacks, postId) => handleEpisodeSelection(state.currentEp + 1, state, elements, callbacks, postId);
+export const prevEpisode = (state, elements, callbacks, postId) => handleEpisodeSelection(state.currentEp - 1, state, elements, callbacks, postId);
 
 export const initFullscreen = (fullBtn, wrap) => {
   const fs = {

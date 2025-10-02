@@ -56,14 +56,18 @@ function get_processed_serial_data($post_id) {
 
             if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
                 $api_body = json_decode(wp_remote_retrieve_body($response), true);
-                if (isset($api_body['data']['video_list'])) {
-                    $book_details = $api_body['data']['book_details'];
-                    $raw_episodes = $api_body['data']['video_list'];
-                    usort($raw_episodes, function($a, $b) { return $a['vid_index'] <=> $b['vid_index']; });
-                    foreach ($raw_episodes as $episode) {
-                        $video_url = $episode['urls']['main_url'] ?? $episode['urls']['backup_url'] ?? '';
-                        if (!empty($video_url)) {
-                           $episodes_data[] = ['episode' => $episode['vid_index'], 'is_ad' => false, 'src' => $video_url, 'original_src' => $video_url];
+                // Add robust checks to prevent fatal errors on unexpected API response
+                if (isset($api_body['data']) && is_array($api_body['data'])) {
+                    $book_details = $api_body['data']['book_details'] ?? [];
+                    $raw_episodes = $api_body['data']['video_list'] ?? [];
+
+                    if (!empty($raw_episodes) && is_array($raw_episodes)) {
+                        usort($raw_episodes, function($a, $b) { return ($a['vid_index'] ?? 0) <=> ($b['vid_index'] ?? 0); });
+                        foreach ($raw_episodes as $episode) {
+                            $video_url = $episode['urls']['main_url'] ?? $episode['urls']['backup_url'] ?? '';
+                            if (!empty($video_url) && isset($episode['vid_index'])) {
+                               $episodes_data[] = ['episode' => $episode['vid_index'], 'is_ad' => false, 'src' => $video_url, 'original_src' => $video_url];
+                            }
                         }
                     }
                 }

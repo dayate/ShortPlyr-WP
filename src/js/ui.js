@@ -83,7 +83,7 @@ export const populateUI = async (seriesData, elements, state, handleEpisodeSelec
   buildGrid(state.TOTAL, elements.grid, state.currentEp, handleEpisodeSelection);
 
   if (state.TOTAL > 0) {
-    handleEpisodeSelection(1);
+    handleEpisodeSelection(state.currentEp);
   } else {
     showError('Tidak ada episode yang tersedia.', elements.titleEl, elements.xgContainer);
   }
