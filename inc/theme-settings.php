@@ -23,7 +23,7 @@ function shortplyr_settings_init() {
     register_setting('shortplyr_settings_group', 'shortplyr_melolo_api_url');
 
     // Register a setting to store our API Key.
-    register_setting('shortplyr_settings_group', 'shortplyr_melolo_api_key');
+    register_setting('shortplyr_settings_group', 'shortplyr_melolo_api_key', ['sanitize_callback' => 'shortplyr_sanitize_api_key']);
 
     // Add a section to the settings page.
     add_settings_section(
@@ -53,6 +53,23 @@ function shortplyr_settings_init() {
 }
 add_action('admin_init', 'shortplyr_settings_init');
 
+// Sanitization callback for the API key.
+function shortplyr_sanitize_api_key($input) {
+    // If the input is empty, it means the user doesn't want to change the key.
+    // In this case, we return the existing key to prevent accidental deletion.
+    if (empty($input)) {
+        return get_option('shortplyr_melolo_api_key');
+    }
+
+    // If the input is a single space, treat it as an intentional deletion.
+    if (trim($input) === '') {
+        return '';
+    }
+
+    // Otherwise, sanitize and return the new key.
+    return sanitize_text_field($input);
+}
+
 // 3. Callbacks to render the HTML for the page and fields.
 function shortplyr_api_section_callback() {
     echo '<p>Enter the base URL and API Key for the MeloloAPI. This will be used to fetch episode data.</p>';
@@ -67,11 +84,37 @@ function shortplyr_melolo_api_url_field_html() {
 }
 
 function shortplyr_melolo_api_key_field_html() {
-    $api_key = get_option('shortplyr_melolo_api_key', '');
+    // Check if the key is hardcoded in wp-config.php.
+    if (defined('SHORTPLYR_MELOLO_API_KEY') && !empty(SHORTPLYR_MELOLO_API_KEY)) {
+        ?>
+        <div class="api-key-wrapper">
+            <input type="text" name="shortplyr_melolo_api_key" id="shortplyr_melolo_api_key" value="********************************" disabled class="regular-text">
+        </div>
+        <p class="description"><strong>The API Key is defined in your <code>wp-config.php</code> file and cannot be edited here.</strong></p>
+        <?php
+        return;
+    }
+
+    $api_key = get_option('shortplyr_melolo_api_key');
     ?>
-    <input type="text" name="shortplyr_melolo_api_key" id="shortplyr_melolo_api_key" value="<?php echo esc_attr($api_key); ?>" class="regular-text">
-    <p class="description">Enter your API key here.</p>
+    <div class="api-key-wrapper">
+        <?php if (!empty($api_key)) : ?>
+            <input type="password" name="shortplyr_melolo_api_key" id="shortplyr_melolo_api_key" value="<?php echo esc_attr(str_repeat('*', 16)); ?>" data-apikey="<?php echo esc_attr($api_key); ?>" class="regular-text">
+            <button type="button" id="toggle-api-key" class="button button-secondary">
+                <i class="ri-eye-line"></i>
+            </button>
+        <?php else : ?>
+            <input type="text" name="shortplyr_melolo_api_key" id="shortplyr_melolo_api_key" value="" class="regular-text">
+        <?php endif; ?>
+    </div>
     <?php
+
+    if (!empty($api_key)) {
+        echo '<p class="description">An API key is already saved. To change it, enter a new key above. To delete it, enter a single space and click Save.</p>';
+    } else {
+        echo '<p class="description">Enter your API key here.</p>';
+    }
+    echo '<p class="description">For enhanced security, you can define the key in your <code>wp-config.php</code> file by adding: <br><code>define(\'SHORTPLYR_MELOLO_API_KEY\', \'your-api-key\');</code></p>';
 }
 
 function shortplyr_settings_page_html() {

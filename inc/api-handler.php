@@ -47,7 +47,8 @@ function get_processed_serial_data($post_id) {
 
         if (!empty($api_query) && !empty($api_book_id) && !empty($api_book_name)) {
             $api_url = get_option('shortplyr_melolo_api_url', 'http://127.0.0.1:8000/api/search-and-get-details');
-            $api_key = get_option('shortplyr_melolo_api_key', '');
+            // Prioritaskan kunci dari wp-config.php jika ada, jika tidak, ambil dari database.
+            $api_key = defined('SHORTPLYR_MELOLO_API_KEY') ? SHORTPLYR_MELOLO_API_KEY : get_option('shortplyr_melolo_api_key', '');
             $full_api_url = add_query_arg(['query' => urlencode($api_query),'book_id' => urlencode($api_book_id),'book_name' => urlencode($api_book_name)], $api_url);
             $headers = [];
             if (!empty($api_key)) { $headers['X-API-Key'] = $api_key; }

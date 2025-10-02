@@ -10,6 +10,21 @@ function serial_video_admin_scripts($hook) {
 }
 add_action('admin_enqueue_scripts', 'serial_video_admin_scripts');
 
+function shortplyr_settings_page_scripts($hook_suffix) {
+    // The hook for a theme page is 'appearance_page_{menu_slug}'
+    if ($hook_suffix === 'appearance_page_shortplyr-settings') {
+        // Enqueue the admin settings script
+        wp_enqueue_script('shortplyr-admin-settings-js', get_template_directory_uri() . '/assets/js/admin-settings.js', [], '1.0', true);
+
+        // Enqueue Remixicon CSS for the eye icon
+        wp_enqueue_style('remixicon-css', get_template_directory_uri() . '/assets/css/remixicon/remixicon.css', [], '4.3.0');
+
+        // Enqueue the admin settings styles
+        wp_enqueue_style('shortplyr-admin-settings-css', get_template_directory_uri() . '/assets/css/admin-settings.css', [], '1.0');
+    }
+}
+add_action('admin_enqueue_scripts', 'shortplyr_settings_page_scripts');
+
 /**
  * Fungsi ini mengambil semua data yang dibutuhkan (dari API atau manual)
  * dan MENGIRIMKANNYA KE JAVASCRIPT.

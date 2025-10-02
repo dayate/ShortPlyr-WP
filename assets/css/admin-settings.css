@@ -1,0 +1,41 @@
+/* Styling for the API Key input on the ShortPlyr settings page */
+.api-key-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.api-key-wrapper .regular-text {
+    /* Make space for the icon button */
+    padding-right: 40px !important;
+}
+
+.api-key-wrapper #toggle-api-key {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    bottom: 1px;
+    width: 40px;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+    
+    /* Reset button styles to make it look like part of the input */
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    
+    /* Center the icon */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.api-key-wrapper #toggle-api-key:hover {
+    background: #f0f0f1; /* A subtle hover effect */
+}
+
+.api-key-wrapper #toggle-api-key i {
+    font-size: 20px;
+    color: #50575e; /* Match WordPress admin text color */
+    line-height: 1;
+}
