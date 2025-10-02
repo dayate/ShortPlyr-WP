@@ -2,6 +2,7 @@
 import Player from 'xgplayer';
 import { clamp, setPlayingUI, setOverlay } from './ui.js';
 import { showError } from './apiClient.js';
+import { openSheetMid, closeSheet } from './sheet.js';
 
 let xg = null;
 let sideControlsTimer = null;
@@ -158,31 +159,88 @@ const hideIndicator = (playbackIndicator) => {
   }
 };
 
-export const initLongPress = (playerFull, playbackIndicator, playbackSpeedText) => {
-  if (window.innerWidth > 768) return;
-  let pressTimer = null;
-  const startPress = (e) => {
-    if (
-      e.target.closest('.xgplayer-controls, .xgplayer-enter, #sideControls')
-    ) {
-      return;
-    }
-    pressTimer = setTimeout(() => {
-      if (xg && !xg.paused) {
-        const newSpeed = 2;
-        xg.playbackRate = newSpeed;
-        showIndicator(newSpeed, playbackIndicator, playbackSpeedText);
-      }
-    }, 700);
-  };
-  const endPress = () => {
-    clearTimeout(pressTimer);
-    if (xg && xg.playbackRate !== 1) {
-      xg.playbackRate = 1;
-      hideIndicator(playbackIndicator);
-    }
-  };
-  playerFull.addEventListener('touchstart', startPress, { passive: true });
-  playerFull.addEventListener('touchend', endPress);
-  playerFull.addEventListener('touchcancel', endPress);
-};
+export function initPlayerGestures(playerFull, playbackIndicator, playbackSpeedText, sheet, openBtn) {
+    if (window.innerWidth > 768) return; // Only for mobile
+
+    let pressTimer = null;
+    const gesture = {
+        startY: 0,
+        isSwiping: false,
+        startTime: 0,
+    };
+
+    const startGesture = (e) => {
+        // Ignore clicks on controls
+        if (e.target.closest('.xgplayer-controls, .xgplayer-enter, #sideControls')) {
+            return;
+        }
+
+        gesture.startY = e.clientY;
+        gesture.startTime = e.timeStamp;
+        gesture.isSwiping = false;
+
+        // Set a timer for long-press
+        pressTimer = setTimeout(() => {
+            if (xg && !xg.paused && !gesture.isSwiping) {
+                const newSpeed = 2;
+                xg.playbackRate = newSpeed;
+                showIndicator(newSpeed, playbackIndicator, playbackSpeedText);
+            }
+            pressTimer = null; // Timer has fired
+        }, 500); // 500ms for long press
+    };
+
+    const moveGesture = (e) => {
+        if (gesture.startY === 0) return; // Gesture didn't start on the player
+
+        const deltaY = e.clientY - gesture.startY;
+        // If user moves finger more than 10px, consider it a swipe
+        if (Math.abs(deltaY) > 10) {
+            if (pressTimer) {
+                clearTimeout(pressTimer);
+                pressTimer = null;
+            }
+            gesture.isSwiping = true;
+        }
+    };
+
+    const endGesture = (e) => {
+        if (gesture.startY === 0) return; // Gesture didn't start on the player
+
+        // If a press timer was set but didn't fire, clear it.
+        if (pressTimer) {
+            clearTimeout(pressTimer);
+            pressTimer = null;
+        }
+        // If playback rate was changed, reset it.
+        if (xg && xg.playbackRate !== 1) {
+            xg.playbackRate = 1;
+            hideIndicator(playbackIndicator);
+        }
+
+        if (gesture.isSwiping) {
+            const deltaY = e.clientY - gesture.startY;
+            const deltaTime = e.timeStamp - gesture.startTime;
+            const velocity = Math.abs(deltaY / deltaTime);
+
+            // Swipe Up
+            if (deltaY < -50 && velocity > 0.4) { // Threshold of 50px up
+                openSheetMid(sheet, openBtn);
+            }
+            // Swipe Down
+            if (deltaY > 50 && velocity > 0.4) { // Threshold of 50px down
+                closeSheet(sheet, openBtn);
+            }
+        }
+        
+        // Reset gesture state
+        gesture.isSwiping = false;
+        gesture.startY = 0;
+        gesture.startTime = 0;
+    };
+
+    playerFull.addEventListener('pointerdown', startGesture);
+    playerFull.addEventListener('pointermove', moveGesture);
+    playerFull.addEventListener('pointerup', endGesture);
+    playerFull.addEventListener('pointercancel', endGesture);
+}

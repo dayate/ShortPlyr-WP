@@ -4,7 +4,7 @@ import {
   nextEpisode,
   prevEpisode,
   initFullscreen,
-  initLongPress,
+  initPlayerGestures,
 } from './player.js';
 import { initSheet, closeSheet } from './sheet.js';
 import { getDOMElements, populateUI } from './ui.js';
@@ -54,10 +54,12 @@ import { getDOMElements, populateUI } from './ui.js';
 
     initSheet(elements.sheet, elements.openBtn, elements.sheetScroll);
     initFullscreen(elements.fullBtn, elements.wrap);
-    initLongPress(
+    initPlayerGestures(
       elements.playerFull,
       elements.playbackIndicator,
-      elements.playbackSpeedText
+      elements.playbackSpeedText,
+      elements.sheet,
+      elements.openBtn
     );
 
     elements.prevEpBtn.onclick = () => prevEpisode(state, elements, callbacks, postId);

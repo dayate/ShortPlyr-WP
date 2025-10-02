@@ -48,6 +48,9 @@ function dragStart(y, pointerId, sheet) {
   drag.velocity = 0;
   drag.pointerId = pointerId ?? null;
   sheet.style.transition = 'none';
+  // Apply to both body and html for robustness
+  document.body.style.overscrollBehaviorY = 'contain';
+  document.documentElement.style.overscrollBehaviorY = 'contain';
 }
 
 function dragMove(y, sheet, openBtn) {
@@ -67,6 +70,9 @@ function dragMove(y, sheet, openBtn) {
 function dragEnd(sheet, openBtn) {
   if (!drag.active) return;
   sheet.style.transition = '';
+  // Remove from both
+  document.body.style.overscrollBehaviorY = '';
+  document.documentElement.style.overscrollBehaviorY = '';
 
   const velocity = drag.velocity;
   const isSwipeUp = velocity < -VELOCITY_TRIGGER;
@@ -80,11 +86,8 @@ function dragEnd(sheet, openBtn) {
     }
     isOpen = true;
   } else if (isSwipeDown) {
-    if (currentY < SHEET_MID_Y - 5) {
-      setY(SHEET_MID_Y, sheet, openBtn);
-    } else {
-      closeSheet(sheet, openBtn);
-    }
+    // New simplified logic: always close on swipe down.
+    closeSheet(sheet, openBtn);
   } else {
     const states = [SHEET_TOP_Y, SHEET_MID_Y, SHEET_CLOSED_Y];
     const closestState = states.reduce((prev, curr) => {
