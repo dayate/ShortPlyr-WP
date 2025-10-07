@@ -112,10 +112,10 @@ export const initSheet = (sheet, openBtn, sheetScroll) => {
   };
 
   sheet.addEventListener('pointerdown', (e) => {
+    if (!isOpen) return; // Do not allow dragging if the sheet is closed
     if (e.target.closest('button')) return;
     const y = e.clientY;
     if (
-      isOpen &&
       currentY === SHEET_TOP_Y &&
       sheetScroll &&
       sheetScroll.scrollTop > 0

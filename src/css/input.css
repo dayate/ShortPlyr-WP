@@ -13,13 +13,14 @@
 
 .loader svg rect {
   fill: none;
-  stroke: #4A5568; /* Gray-600 */
+  stroke: #fff; /* Gray-600 */
   stroke-width: 10;
   stroke-linejoin: miter;
   stroke-linecap: butt;
   stroke-dasharray: 192 64;
   stroke-dashoffset: 0;
-  animation: pathRect var(--duration) cubic-bezier(0.785, 0.135, 0.15, 0.86) infinite;
+  animation: pathRect var(--duration) cubic-bezier(0.785, 0.135, 0.15, 0.86)
+    infinite;
 }
 
 @keyframes pathRect {
@@ -95,7 +96,9 @@ body {
 
 /* 1. Transformasi untuk Bottom Sheet yang dikontrol oleh JS */
 .sheet {
-  transform: translateY(var(--sheet-y, 100%)); /* FIX: Fallback value to prevent flicker */
+  transform: translateY(
+    var(--sheet-y, 100%)
+  ); /* FIX: Fallback value to prevent flicker */
   transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
   will-change: transform;
 }
@@ -105,8 +108,8 @@ body {
   display: none;
 }
 .no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 /* 3. Grid Episode Dinamis */

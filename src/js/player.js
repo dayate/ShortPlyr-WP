@@ -1,4 +1,3 @@
-
 import Player from 'xgplayer';
 import { clamp, setPlayingUI, setOverlay } from './ui.js';
 import { showError } from './apiClient.js';
@@ -36,6 +35,11 @@ const mountXG = (url, elements, state, callbacks) => {
     lang: 'id',
     playsinline: true,
     fitVideoSize: 'contain',
+    dblclick: false,
+    closeVideoClick: true,
+    seek: false, // Menonaktifkan fungsi seek pada progress bar
+    closeVideoDblclick: true,
+    closeVideoTouch: true, // Menonaktifkan gestur sentuh bawaan (swipe to seek)
     controls: { name: 'play' },
     ignores: [
       'playbackRate',
@@ -64,12 +68,17 @@ const mountXG = (url, elements, state, callbacks) => {
   });
   xg.on('ended', callbacks.onEnded);
   xg.on('error', () => {
-    if (elements.ovTitle) elements.ovTitle.textContent = `Gagal memuat Ep ${state.currentEp}`;
+    if (elements.ovTitle)
+      elements.ovTitle.textContent = `Gagal memuat Ep ${state.currentEp}`;
     callbacks.onPlayerError();
   });
 
-  elements.playerFull.addEventListener('mousemove', () => resetSideControlsTimer(elements.sideControls));
-  elements.playerFull.addEventListener('touchstart', () => resetSideControlsTimer(elements.sideControls));
+  elements.playerFull.addEventListener('mousemove', () =>
+    resetSideControlsTimer(elements.sideControls),
+  );
+  elements.playerFull.addEventListener('touchstart', () =>
+    resetSideControlsTimer(elements.sideControls),
+  );
   resetSideControlsTimer(elements.sideControls);
 };
 
@@ -82,13 +91,17 @@ export const setEpisode = (n, state, elements, callbacks, postId) => {
     .forEach((b) =>
       b.setAttribute(
         'aria-current',
-        String(Number(b.dataset.ep) === state.currentEp)
-      )
+        String(Number(b.dataset.ep) === state.currentEp),
+      ),
     );
   const episodeData = state.EPISODES[state.currentEp - 1];
   const src = episodeData.original_src || episodeData.src;
   if (!src) {
-    showError(`Video Ep ${state.currentEp} tidak ditemukan.`, elements.titleEl, elements.xgContainer);
+    showError(
+      `Video Ep ${state.currentEp} tidak ditemukan.`,
+      elements.titleEl,
+      elements.xgContainer,
+    );
     return;
   }
   mountXG(src, elements, state, callbacks);
@@ -97,11 +110,17 @@ export const setEpisode = (n, state, elements, callbacks, postId) => {
 
   // Save progress to localStorage
   if (postId) {
-      localStorage.setItem(`shortplyr_progress_${postId}`, state.currentEp);
+    localStorage.setItem(`shortplyr_progress_${postId}`, state.currentEp);
   }
 };
 
-export const handleEpisodeSelection = (n, state, elements, callbacks, postId) => {
+export const handleEpisodeSelection = (
+  n,
+  state,
+  elements,
+  callbacks,
+  postId,
+) => {
   const targetEp = clamp(n, 1, state.TOTAL);
   if (!targetEp) return;
   const episodeData = state.EPISODES[targetEp - 1];
@@ -119,8 +138,22 @@ export const handleEpisodeSelection = (n, state, elements, callbacks, postId) =>
   setEpisode(targetEp, state, elements, callbacks, postId);
 };
 
-export const nextEpisode = (state, elements, callbacks, postId) => handleEpisodeSelection(state.currentEp + 1, state, elements, callbacks, postId);
-export const prevEpisode = (state, elements, callbacks, postId) => handleEpisodeSelection(state.currentEp - 1, state, elements, callbacks, postId);
+export const nextEpisode = (state, elements, callbacks, postId) =>
+  handleEpisodeSelection(
+    state.currentEp + 1,
+    state,
+    elements,
+    callbacks,
+    postId,
+  );
+export const prevEpisode = (state, elements, callbacks, postId) =>
+  handleEpisodeSelection(
+    state.currentEp - 1,
+    state,
+    elements,
+    callbacks,
+    postId,
+  );
 
 export const initFullscreen = (fullBtn, wrap) => {
   const fs = {
@@ -159,88 +192,165 @@ const hideIndicator = (playbackIndicator) => {
   }
 };
 
-export function initPlayerGestures(playerFull, playbackIndicator, playbackSpeedText, sheet, openBtn) {
-    if (window.innerWidth > 768) return; // Only for mobile
+export function initPlayerGestures(
+  playerFull,
+  playbackIndicator,
+  playbackSpeedText,
+  sheet,
+  openBtn,
+) {
+  if (window.innerWidth > 768) return; // Only for mobile
 
-    let pressTimer = null;
-    const gesture = {
-        startY: 0,
-        isSwiping: false,
-        startTime: 0,
-    };
+  const gesture = {
+    startX: 0,
+    startY: 0,
+    isSwiping: false,
+  };
 
-    const startGesture = (e) => {
-        // Ignore clicks on controls
-        if (e.target.closest('.xgplayer-controls, .xgplayer-enter, #sideControls')) {
-            return;
+  let lastTap = { time: 0, side: null };
+  let tapTimer = null;
+  const DOUBLE_TAP_THRESHOLD = 300; // ms
+  const SEEK_TIME = 5; // seconds
+
+  // --- Create Seek Indicators ---
+  let seekForwardIndicator, seekBackwardIndicator;
+  let indicatorHideTimer = null;
+
+  function createSeekIndicator(side) {
+    const indicator = document.createElement('div');
+    const icon = document.createElement('i');
+    const text = document.createElement('span');
+
+    const iconClass =
+      side === 'forward' ? 'ri-skip-forward-fill' : 'ri-skip-back-fill';
+
+    indicator.className = `absolute top-1/2 -translate-y-1/2 z-[3] flex flex-col items-center justify-center gap-2 text-white pointer-events-none opacity-0 transition-opacity duration-200`;
+    if (side === 'forward') {
+      indicator.style.right = '25%';
+    } else {
+      indicator.style.left = '25%';
+    }
+
+    icon.className = `${iconClass} text-4xl`;
+    text.className = 'font-bold text-sm';
+    text.textContent = `${side === 'forward' ? '+' : '-'}${SEEK_TIME}s`;
+
+    indicator.appendChild(icon);
+    indicator.appendChild(text);
+    playerFull.appendChild(indicator);
+    return indicator;
+  }
+
+  seekForwardIndicator = createSeekIndicator('forward');
+  seekBackwardIndicator = createSeekIndicator('backward');
+
+  function showSeekIndicator(side) {
+    clearTimeout(indicatorHideTimer);
+    const indicator =
+      side === 'forward' ? seekForwardIndicator : seekBackwardIndicator;
+    const otherIndicator =
+      side === 'forward' ? seekBackwardIndicator : seekForwardIndicator;
+
+    otherIndicator.classList.add('opacity-0');
+    indicator.classList.remove('opacity-0');
+
+    indicatorHideTimer = setTimeout(() => {
+      indicator.classList.add('opacity-0');
+    }, 500);
+  }
+
+  // --- Gesture Handlers ---
+  const startGesture = (e) => {
+    if (
+      e.target.closest('.xgplayer-controls, .xgplayer-enter, #sideControls')
+    ) {
+      return;
+    }
+    gesture.startX = e.clientX;
+    gesture.startY = e.clientY;
+    gesture.isSwiping = false;
+  };
+
+  const moveGesture = (e) => {
+    if (gesture.startX === 0) return;
+    const deltaX = e.clientX - gesture.startX;
+    const deltaY = e.clientY - gesture.startY;
+    if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
+      gesture.isSwiping = true;
+    }
+  };
+
+  const endGesture = (e) => {
+    if (gesture.startX === 0) return;
+
+    if (!gesture.isSwiping) {
+      // It's a tap.
+      e.preventDefault(); // Prevent any other unwanted click events.
+
+      const now = performance.now();
+      const playerWidth = playerFull.clientWidth;
+      const tapX = gesture.startX;
+
+      // Tentukan area trigger di sisi kiri dan kanan (misal: 33% di setiap sisi)
+      const sideThreshold = playerWidth / 3;
+
+      const side =
+        tapX < sideThreshold
+          ? 'left'
+          : tapX > playerWidth - sideThreshold
+            ? 'right'
+            : 'center';
+
+      if (now - lastTap.time < DOUBLE_TAP_THRESHOLD && side === lastTap.side) {
+        // --- DOUBLE TAP ---
+        // A double tap was detected, so cancel the single tap timer.
+        if (tapTimer) {
+          clearTimeout(tapTimer);
+          tapTimer = null;
         }
 
-        gesture.startY = e.clientY;
-        gesture.startTime = e.timeStamp;
-        gesture.isSwiping = false;
-
-        // Set a timer for long-press
-        pressTimer = setTimeout(() => {
-            if (xg && !xg.paused && !gesture.isSwiping) {
-                const newSpeed = 2;
-                xg.playbackRate = newSpeed;
-                showIndicator(newSpeed, playbackIndicator, playbackSpeedText);
-            }
-            pressTimer = null; // Timer has fired
-        }, 500); // 500ms for long press
-    };
-
-    const moveGesture = (e) => {
-        if (gesture.startY === 0) return; // Gesture didn't start on the player
-
-        const deltaY = e.clientY - gesture.startY;
-        // If user moves finger more than 10px, consider it a swipe
-        if (Math.abs(deltaY) > 10) {
-            if (pressTimer) {
-                clearTimeout(pressTimer);
-                pressTimer = null;
-            }
-            gesture.isSwiping = true;
+        // Lakukan aksi maju/mundur hanya jika tap di sisi kiri atau kanan
+        if (side === 'right') {
+          xg.currentTime = Math.min(xg.duration, xg.currentTime + SEEK_TIME);
+          showSeekIndicator('forward');
+        } else if (side === 'left') {
+          xg.currentTime = Math.max(0, xg.currentTime - SEEK_TIME);
+          showSeekIndicator('backward');
+        } else if (side === 'center') {
+          if (xg.paused) {
+            xg.play();
+          } else {
+            xg.pause();
+          }
         }
-    };
+        lastTap = { time: 0, side: null }; // Reset double-tap detection.
+      } else {
+        // --- FIRST TAP ---
+        // This is the first tap, so record it.
+        lastTap = { time: now, side: side };
 
-    const endGesture = (e) => {
-        if (gesture.startY === 0) return; // Gesture didn't start on the player
+        // And set a timer for the single tap action.
+        tapTimer = setTimeout(() => {
+          // If the timer fires, it means no second tap occurred.
+          // Execute the single tap action: play/pause.
+          if (xg.paused) {
+            xg.play();
+          } else {
+            xg.pause();
+          }
+          tapTimer = null;
+        }, DOUBLE_TAP_THRESHOLD);
+      }
+    }
 
-        // If a press timer was set but didn't fire, clear it.
-        if (pressTimer) {
-            clearTimeout(pressTimer);
-            pressTimer = null;
-        }
-        // If playback rate was changed, reset it.
-        if (xg && xg.playbackRate !== 1) {
-            xg.playbackRate = 1;
-            hideIndicator(playbackIndicator);
-        }
+    // Reset gesture state
+    gesture.startX = 0;
+    gesture.startY = 0;
+    gesture.isSwiping = false;
+  };
 
-        if (gesture.isSwiping) {
-            const deltaY = e.clientY - gesture.startY;
-            const deltaTime = e.timeStamp - gesture.startTime;
-            const velocity = Math.abs(deltaY / deltaTime);
-
-            // Swipe Up
-            if (deltaY < -50 && velocity > 0.4) { // Threshold of 50px up
-                openSheetMid(sheet, openBtn);
-            }
-            // Swipe Down
-            if (deltaY > 50 && velocity > 0.4) { // Threshold of 50px down
-                closeSheet(sheet, openBtn);
-            }
-        }
-        
-        // Reset gesture state
-        gesture.isSwiping = false;
-        gesture.startY = 0;
-        gesture.startTime = 0;
-    };
-
-    playerFull.addEventListener('pointerdown', startGesture);
-    playerFull.addEventListener('pointermove', moveGesture);
-    playerFull.addEventListener('pointerup', endGesture);
-    playerFull.addEventListener('pointercancel', endGesture);
+  playerFull.addEventListener('pointerdown', startGesture);
+  playerFull.addEventListener('pointermove', moveGesture);
+  playerFull.addEventListener('pointerup', endGesture);
+  playerFull.addEventListener('pointercancel', endGesture);
 }
