@@ -17,13 +17,22 @@
         <section class="player-full relative w-full h-dvh bg-black overflow-hidden" aria-label="Video Player">
 
             <div id="player-loader" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black transition-opacity duration-500">
-                <div class="loader">
-                  <svg viewBox="0 0 80 80">
-                    <rect x="8" y="8" width="64" height="64"></rect>
-                  </svg>
-                </div>
-                <p class="text-white mt-4 text-sm">Memuat Data...</p>
-            </div>
+    <div class="jelly-triangle">
+        <div class="jelly-triangle__dot"></div>
+        <div class="jelly-triangle__traveler"></div>
+    </div>
+
+    <svg width="0" height="0" class="jelly-maker">
+        <defs>
+            <filter id="uib-jelly-triangle-ooze">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="7.3" result="blur"></feGaussianBlur>
+                <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="ooze"></feColorMatrix>
+                <feBlend in="SourceGraphic" in2="ooze"></feBlend>
+            </filter>
+        </defs>
+    </svg>
+    <p class="text-white mt-4 text-md font-semibold">Sedang Memuat Data ...</p>
+</div>
 
             <div id="xgplayer" class="xgplayer-container absolute inset-0 w-full h-full bg-black overflow-hidden" aria-label="xgplayer"></div>
 
