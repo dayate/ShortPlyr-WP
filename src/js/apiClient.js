@@ -1,4 +1,3 @@
-
 import heic2any from 'heic2any';
 
 let isInitialLoad = true; // Flag for initial load
@@ -69,19 +68,38 @@ export const fetchDataAndInitialize = async (populateUICallback) => {
     typeof window.shortplyrData === 'undefined' ||
     !window.shortplyrData.api_url
   ) {
-    showError('Konfigurasi data tidak ditemukan.', document.querySelector('.title'), document.querySelector('#xgplayer'));
+    showError(
+      'Konfigurasi data tidak ditemukan.',
+      document.querySelector('.title'),
+      document.querySelector('#xgplayer'),
+    );
     return;
   }
   const { post_id, api_url, nonce } = window.shortplyrData;
   const cacheKey = `shortplyr_data_${post_id}`;
 
-  const cachedData = sessionStorage.getItem(cacheKey);
-  if (cachedData) {
-    console.log('Memuat data dari cache sessionStorage.');
-    const seriesData = JSON.parse(cachedData);
-    hidePlayerLoader(document.querySelector('#player-loader'));
-    populateUICallback(seriesData);
-    return;
+  const cachedItem = localStorage.getItem(cacheKey);
+
+  if (cachedItem) {
+    try {
+      const { timestamp, data } = JSON.parse(cachedItem);
+      const now = new Date().getTime();
+      const oneHour = 60 * 60 * 1000; // 1 jam dalam milidetik
+
+      // Cek apakah cache masih valid (kurang dari 1 jam)
+      if (now - timestamp < oneHour) {
+        hidePlayerLoader(document.querySelector('#player-loader'));
+        populateUICallback(data);
+        return;
+      } else {
+        // Cache kedaluwarsa, hapus dan lanjutkan untuk mengambil data baru
+        localStorage.removeItem(cacheKey);
+      }
+    } catch (e) {
+      // Jika data cache rusak, hapus saja
+      console.error('Gagal mem-parsing data cache, cache akan dihapus.', e);
+      localStorage.removeItem(cacheKey);
+    }
   }
 
   try {
@@ -96,20 +114,34 @@ export const fetchDataAndInitialize = async (populateUICallback) => {
 
     const seriesData = await response.json();
     if (seriesData.code === 'no_data') {
-      showError(seriesData.message || 'Data tidak dapat diambil.', document.querySelector('.title'), document.querySelector('#xgplayer'));
+      showError(
+        seriesData.message || 'Data tidak dapat diambil.',
+        document.querySelector('.title'),
+        document.querySelector('#xgplayer'),
+      );
       return;
     }
 
+    // Buat item cache baru dengan timestamp
+    const itemToCache = {
+      timestamp: new Date().getTime(),
+      data: seriesData,
+    };
+
     try {
-      sessionStorage.setItem(cacheKey, JSON.stringify(seriesData));
+      localStorage.setItem(cacheKey, JSON.stringify(itemToCache));
     } catch (e) {
-      console.error('Gagal menyimpan ke sessionStorage:', e);
+      console.error('Gagal menyimpan ke localStorage:', e);
     }
 
     populateUICallback(seriesData);
   } catch (error) {
     console.error('Gagal mengambil data serial:', error);
-    showError('Gagal mengambil data serial.', document.querySelector('.title'), document.querySelector('#xgplayer'));
+    showError(
+      'Gagal mengambil data serial.',
+      document.querySelector('.title'),
+      document.querySelector('#xgplayer'),
+    );
   }
 };
 
