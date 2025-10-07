@@ -19,7 +19,7 @@ function _shortplyr_fetch_api_episodes($post_id) {
     $api_url = get_option('shortplyr_melolo_api_url', 'http://127.0.0.1:8000/api/search-and-get-details');
     $api_key = defined('SHORTPLYR_MELOLO_API_KEY') ? SHORTPLYR_MELOLO_API_KEY : get_option('shortplyr_melolo_api_key', '');
     $full_api_url = add_query_arg(['query' => urlencode($api_query), 'book_id' => urlencode($api_book_id), 'book_name' => urlencode($api_book_name)], $api_url);
-    
+
     $headers = [];
     if (!empty($api_key)) {
         $headers['X-API-Key'] = $api_key;
@@ -175,7 +175,7 @@ function get_processed_serial_data($post_id) {
         'book_details' => $book_details, // Keep for potential future use
     ];
 
-    set_transient($transient_key, $final_data, 1 * HOUR_IN_SECONDS);
+    set_transient($transient_key, $final_data, 3 * HOUR_IN_SECONDS);
     return $final_data;
 }
 
