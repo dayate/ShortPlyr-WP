@@ -1,5 +1,6 @@
 module.exports = {
-  content: ['./templates/**/*.php', './src/js/**/*.js'],
+  // Sesudah diubah
+  content: ['./*.php', './templates/**/*.php', './src/js/**/*.js'],
   theme: {
     extend: {
       keyframes: {

@@ -31,10 +31,12 @@ add_action('admin_enqueue_scripts', 'shortplyr_settings_page_scripts');
  * JavaScript SANGAT MEMBUTUHKAN ini untuk memutar video.
  */
 function sudutcerita_enqueue_assets() {
-    if (is_singular('serial_video')) {
-        $css_ver = filemtime(get_theme_file_path('/assets/css/main.min.css'));
-        wp_enqueue_style('sudutcerita-main-style', get_template_directory_uri() . '/assets/css/main.min.css', [], $css_ver);
+    // Muat CSS utama di SEMUA halaman (termasuk 404)
+    $css_ver = filemtime(get_theme_file_path('/assets/css/main.min.css'));
+    wp_enqueue_style('sudutcerita-main-style', get_template_directory_uri() . '/assets/css/main.min.css', [], $css_ver);
 
+    // Muat JavaScript HANYA jika ini halaman single video
+    if (is_singular('serial_video')) {
         // Siapkan data untuk JavaScript: post ID, URL REST, dan nonce.
         $data_for_js = [
             'post_id' => get_the_ID(),
