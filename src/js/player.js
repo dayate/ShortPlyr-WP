@@ -26,6 +26,11 @@ const mountXG = (url, elements, state, callbacks) => {
     } catch {}
   }
 
+  // Pastikan elemen DOM tersedia sebelum inisialisasi player
+  if (!elements.xgContainer) {
+    return;
+  }
+
   xg = new Player({
     id: 'xgplayer',
     url,

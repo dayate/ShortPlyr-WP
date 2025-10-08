@@ -75,29 +75,30 @@ export const fetchDataAndInitialize = async (populateUICallback) => {
     );
     return;
   }
+  
   const { post_id, api_url, nonce } = window.shortplyrData;
   const cacheKey = `shortplyr_data_${post_id}`;
 
+  // Cek localStorage untuk data cache
   const cachedItem = localStorage.getItem(cacheKey);
 
   if (cachedItem) {
     try {
-      const { timestamp, data } = JSON.parse(cachedItem);
+      const { fetch_timestamp, data } = JSON.parse(cachedItem);
       const now = new Date().getTime();
-      const oneHour = 60 * 60 * 1000; // 1 jam dalam milidetik
-
-      // Cek apakah cache masih valid (kurang dari 1 jam)
-      if (now - timestamp < oneHour) {
+      const fetchTimeSeconds = Math.floor(fetch_timestamp / 1000);
+      const safetyMarginExpiryTime = (fetchTimeSeconds + (2.5 * 60 * 60)) * 1000; // 2.5 jam dari waktu pengambilan
+      
+      if (now < safetyMarginExpiryTime) {
+        // Data cache masih valid dalam batas aman
         hidePlayerLoader(document.querySelector('#player-loader'));
         populateUICallback(data);
         return;
       } else {
-        // Cache kedaluwarsa, hapus dan lanjutkan untuk mengambil data baru
+        // Melewati batas aman (2.5 jam), hapus cache dan ambil data baru
         localStorage.removeItem(cacheKey);
       }
     } catch (e) {
-      // Jika data cache rusak, hapus saja
-      console.error('Gagal mem-parsing data cache, cache akan dihapus.', e);
       localStorage.removeItem(cacheKey);
     }
   }
@@ -108,11 +109,13 @@ export const fetchDataAndInitialize = async (populateUICallback) => {
         'X-WP-Nonce': nonce,
       },
     });
+    
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const seriesData = await response.json();
+    
     if (seriesData.code === 'no_data') {
       showError(
         seriesData.message || 'Data tidak dapat diambil.',
@@ -122,21 +125,19 @@ export const fetchDataAndInitialize = async (populateUICallback) => {
       return;
     }
 
-    // Buat item cache baru dengan timestamp
+    // Simpan ke localStorage dengan waktu pengambilan data asli dari server
     const itemToCache = {
-      timestamp: new Date().getTime(),
+      fetch_timestamp: seriesData.fetch_timestamp || new Date().getTime(), // Gunakan waktu dari server jika tersedia
       data: seriesData,
     };
 
     try {
       localStorage.setItem(cacheKey, JSON.stringify(itemToCache));
     } catch (e) {
-      console.error('Gagal menyimpan ke localStorage:', e);
     }
 
     populateUICallback(seriesData);
   } catch (error) {
-    console.error('Gagal mengambil data serial:', error);
     showError(
       'Gagal mengambil data serial.',
       document.querySelector('.title'),

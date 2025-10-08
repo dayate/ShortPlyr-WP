@@ -19,31 +19,18 @@ import { getDOMElements, populateUI } from './ui.js';
   };
 
   /* =============================== DOM ===================================== */
-  const elements = getDOMElements();
   const postId = window.shortplyrData?.post_id;
 
-  /* ============================== CALLBACKS ================================ */
-  const onEpisodeChange = () => {
-    closeSheet(elements.sheet, elements.openBtn);
-  };
-
-  const onLoadedMetadata = () => {
-    hidePlayerLoader(elements.playerLoader);
-  };
-
-  const onPlayerError = () => {
-    hidePlayerLoader(elements.playerLoader);
-  };
-
-  const callbacks = {
-    onEpisodeChange,
-    onLoadedMetadata,
-    onPlayerError,
-    onEnded: () => nextEpisode(state, elements, callbacks, postId),
-  };
-
   /* ============================== Init ===================================== */
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Ambil elemen setelah DOM sepenuhnya siap
+    const elements = getDOMElements();
+    
+    // Tambahkan pengecekan bahwa elemen player tersedia sebelum inisialisasi
+    if (!elements.xgContainer) {
+      return;
+    }
+
     // Read saved progress from localStorage
     if (postId) {
         const savedEp = localStorage.getItem(`shortplyr_progress_${postId}`);
@@ -62,6 +49,14 @@ import { getDOMElements, populateUI } from './ui.js';
       elements.openBtn
     );
 
+    // Definisikan callbacks setelah elements tersedia
+    const callbacks = {
+      onEpisodeChange: () => closeSheet(elements.sheet, elements.openBtn),
+      onLoadedMetadata: () => hidePlayerLoader(elements.playerLoader),
+      onPlayerError: () => hidePlayerLoader(elements.playerLoader),
+      onEnded: () => nextEpisode(state, elements, callbacks, postId),
+    };
+
     elements.prevEpBtn.onclick = () => prevEpisode(state, elements, callbacks, postId);
     elements.nextEpBtn.onclick = () => nextEpisode(state, elements, callbacks, postId);
 
@@ -73,9 +68,14 @@ import { getDOMElements, populateUI } from './ui.js';
     });
 
     const wrappedPopulateUI = (seriesData) => {
-        populateUI(seriesData, elements, state, (n) => handleEpisodeSelection(n, state, elements, callbacks, postId));
+      // Update state dengan data baru
+      state.EPISODES = seriesData.episodes;
+      state.SERIES_TITLE = seriesData.title;
+      state.TOTAL = seriesData.total;
+      
+      populateUI(seriesData, elements, state, (n) => handleEpisodeSelection(n, state, elements, callbacks, postId));
     }
 
-    fetchDataAndInitialize(wrappedPopulateUI);
+    await fetchDataAndInitialize(wrappedPopulateUI);
   });
 })();

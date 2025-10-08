@@ -135,17 +135,32 @@ function _shortplyr_determine_poster($data_mode, $api_book_details, $post_id) {
 
 /**
  * Main helper function to get and process all serial data.
- * Orchestrates calls to smaller helper functions.
+ * Uses 2.5 hour safety margin for video URL validity.
  * @param int $post_id ID of the post serial.
+ * @param bool $force_refresh Whether to force refresh the data
  * @return array Processed data for JavaScript.
  */
-function get_processed_serial_data($post_id) {
+function get_processed_serial_data($post_id, $force_refresh = false) {
     $transient_key = 'shortplyr_api_data_' . $post_id;
     $cached_data = get_transient($transient_key);
-    if (false !== $cached_data) {
-        return $cached_data;
+    
+    // Cek apakah cache masih valid dengan batas aman (2.5 jam)
+    if (false !== $cached_data && !$force_refresh) {
+        if (isset($cached_data['fetch_timestamp'])) {
+            $safety_margin_expires_at = $cached_data['fetch_timestamp'] + (2.5 * HOUR_IN_SECONDS); // 2.5 jam
+            $current_time = time();
+            
+            if ($current_time < $safety_margin_expires_at) {
+                // URL masih valid dalam batas aman, kembalikan data cache
+                return $cached_data;
+            }
+            // Jika melewati batas aman 2.5 jam, ambil data baru
+        }
     }
 
+    // Waktu sekarang sebagai waktu pengambilan data
+    $fetch_timestamp = time();
+    
     $data_mode = get_post_meta($post_id, '_data_source_mode', true) ?: 'api';
     $episodes_data = [];
     $book_details = [];
@@ -166,16 +181,22 @@ function get_processed_serial_data($post_id) {
     $final_poster_url = _shortplyr_determine_poster($data_mode, $book_details, $post_id);
 
     $final_data = [
-        'id'         => 'series_' . $post_id,
-        'title'      => $final_title,
-        'total'      => count($episodes_with_ads),
-        'synopsis'   => $final_synopsis,
-        'episodes'   => array_values($episodes_with_ads),
-        'poster_url' => $final_poster_url,
-        'book_details' => $book_details, // Keep for potential future use
+        'id'                  => 'series_' . $post_id,
+        'title'               => $final_title,
+        'total'               => count($episodes_with_ads),
+        'synopsis'            => $final_synopsis,
+        'episodes'            => array_values($episodes_with_ads),
+        'poster_url'          => $final_poster_url,
+        'book_details'        => $book_details,
+        'fetch_timestamp'     => $fetch_timestamp,                    // Waktu pengambilan data
+        'safety_margin_expires_at' => $fetch_timestamp + (2.5 * HOUR_IN_SECONDS), // Waktu batas aman
+        'full_validity_expires_at' => $fetch_timestamp + (3 * HOUR_IN_SECONDS),   // Waktu kadaluarsa penuh
+        'cached_at'           => $fetch_timestamp,
     ];
 
-    set_transient($transient_key, $final_data, 3 * HOUR_IN_SECONDS);
+    // Set TTL lebih lama (misalnya 4 jam) untuk memberikan ruang ekstra
+    // tapi validasi utama tetap berdasarkan safety_margin_expires_at
+    set_transient($transient_key, $final_data, 4 * HOUR_IN_SECONDS);
     return $final_data;
 }
 
@@ -215,8 +236,10 @@ function shortplyr_get_serial_data_for_rest(WP_REST_Request $request) {
         return new WP_Error('not_found', 'Serial video tidak ditemukan.', ['status' => 404]);
     }
     $data = get_processed_serial_data($post_id);
-    if (empty($data) || empty($data['episodes'])) {
+    if (empty($data)) {
         return new WP_Error('no_data', 'Data untuk serial ini tidak dapat diambil.', ['status' => 500]);
     }
+    // Dalam mode manual, mungkin tidak ada episode yang ditambahkan, jadi kita tidak harus memvalidasi episodes
+    // Validasi hanya jika data benar-benar kosong
     return new WP_REST_Response($data, 200);
 }
