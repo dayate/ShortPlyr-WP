@@ -218,25 +218,40 @@ export function initPlayerGestures(
 
   function createSeekIndicator(side) {
     const indicator = document.createElement('div');
+    const container = document.createElement('div');
     const icon = document.createElement('i');
     const text = document.createElement('span');
 
     const iconClass =
-      side === 'forward' ? 'ri-skip-forward-fill' : 'ri-skip-back-fill';
+      side === 'forward'
+        ? 'ri-arrow-right-double-fill'
+        : 'ri-arrow-left-double-fill';
 
-    indicator.className = `absolute top-1/2 -translate-y-1/2 z-[3] flex flex-col items-center justify-center gap-2 text-white pointer-events-none opacity-0 transition-opacity duration-200`;
+    indicator.className = `absolute top-1/2 -translate-y-1/2 z-[3] flex items-center justify-center text-white pointer-events-none opacity-0 transition-opacity duration-200`;
     if (side === 'forward') {
       indicator.style.right = '25%';
     } else {
       indicator.style.left = '25%';
     }
 
-    icon.className = `${iconClass} text-4xl`;
-    text.className = 'font-bold text-sm';
-    text.textContent = `${side === 'forward' ? '+' : '-'}${SEEK_TIME}s`;
+    container.className = 'flex items-center gap-1';
 
-    indicator.appendChild(icon);
-    indicator.appendChild(text);
+    icon.className = `${iconClass} text-3xl`;
+    text.className = 'font-bold text-sm';
+
+    if (side === 'forward') {
+      // For forward: text first, then icon ("+5s" then arrow)
+      text.textContent = `+${SEEK_TIME}s`;
+      container.appendChild(text);
+      container.appendChild(icon);
+    } else {
+      // For backward: icon first, then text (arrow then "-5s")
+      text.textContent = `-${SEEK_TIME}s`;
+      container.appendChild(icon);
+      container.appendChild(text);
+    }
+
+    indicator.appendChild(container);
     playerFull.appendChild(indicator);
     return indicator;
   }
