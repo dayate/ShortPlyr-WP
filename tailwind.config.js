@@ -3,6 +3,11 @@ module.exports = {
   content: ['./*.php', './templates/**/*.php', './src/js/**/*.js'],
   theme: {
     extend: {
+      colors: {
+        dark: '#0f1419',
+        primary: '#f8f9fa',
+        secondary: '#9ca3af',
+      },
       keyframes: {
         traceSquare: {
           '0%, 100%': { transform: 'translate(0, 0)' },

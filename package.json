@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "dev": "tailwindcss -i ./src/css/input.css -o ./assets/css/main.min.css --watch",
-    "clean": "rimraf ./assets/css/main.min.css ./assets/js/main.min.js",
+    "clean": "rimraf ./assets/css/main.min.css ./assets/js/main.min.js ./assets/js/heic-converter.min.js",
     "build-css": "tailwindcss -i ./src/css/input.css -o ./assets/css/main.min.css --minify",
     "build-js": "esbuild ./src/js/main.js --bundle --minify --outfile=./assets/js/main.min.js",
-    "build": "npm run clean && npm run build-css && npm run build-js",
+    "build-heic": "esbuild ./src/js/heicConverter.js --bundle --minify --outfile=./assets/js/heic-converter.min.js",
+    "build": "npm run clean && npm run build-css && npm run build-js && npm run build-heic",
     "format": "prettier --write .",
     "lint": "eslint ."
   },

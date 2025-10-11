@@ -144,17 +144,17 @@ function get_processed_serial_data($post_id, $force_refresh = false) {
     $transient_key = 'shortplyr_api_data_' . $post_id;
     $cached_data = get_transient($transient_key);
     
-    // Cek apakah cache masih valid dengan batas aman (2.5 jam)
+    // Cek apakah cache masih valid dengan batas aman
     if (false !== $cached_data && !$force_refresh) {
         if (isset($cached_data['fetch_timestamp'])) {
-            $safety_margin_expires_at = $cached_data['fetch_timestamp'] + (2.5 * HOUR_IN_SECONDS); // 2.5 jam
+            $safety_margin_expires_at = $cached_data['fetch_timestamp'] + SHORTPLYR_SAFETY_MARGIN;
             $current_time = time();
             
             if ($current_time < $safety_margin_expires_at) {
                 // URL masih valid dalam batas aman, kembalikan data cache
                 return $cached_data;
             }
-            // Jika melewati batas aman 2.5 jam, ambil data baru
+            // Jika melewati batas aman, ambil data baru
         }
     }
 
@@ -189,14 +189,14 @@ function get_processed_serial_data($post_id, $force_refresh = false) {
         'poster_url'          => $final_poster_url,
         'book_details'        => $book_details,
         'fetch_timestamp'     => $fetch_timestamp,                    // Waktu pengambilan data
-        'safety_margin_expires_at' => $fetch_timestamp + (2.5 * HOUR_IN_SECONDS), // Waktu batas aman
-        'full_validity_expires_at' => $fetch_timestamp + (3 * HOUR_IN_SECONDS),   // Waktu kadaluarsa penuh
+        'safety_margin_expires_at' => $fetch_timestamp + SHORTPLYR_SAFETY_MARGIN, // Waktu batas aman
+        'full_validity_expires_at' => $fetch_timestamp + SHORTPLYR_FULL_EXPIRY,   // Waktu kadaluarsa penuh
         'cached_at'           => $fetch_timestamp,
     ];
 
-    // Set TTL lebih lama (misalnya 4 jam) untuk memberikan ruang ekstra
+    // Set TTL menggunakan konstanta yang telah ditentukan
     // tapi validasi utama tetap berdasarkan safety_margin_expires_at
-    set_transient($transient_key, $final_data, 4 * HOUR_IN_SECONDS);
+    set_transient($transient_key, $final_data, SHORTPLYR_CACHE_TTL);
     return $final_data;
 }
 

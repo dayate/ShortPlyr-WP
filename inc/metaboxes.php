@@ -208,5 +208,47 @@ function serial_video_save_api_meta_box($post_id) {
     if (isset($_POST['api_query'])) { update_post_meta($post_id, '_api_query', sanitize_text_field($_POST['api_query'])); }
     if (isset($_POST['api_book_id'])) { update_post_meta($post_id, '_api_book_id', sanitize_text_field($_POST['api_book_id'])); }
     if (isset($_POST['api_book_name'])) { update_post_meta($post_id, '_api_book_name', sanitize_text_field($_POST['api_book_name'])); }
+    
+    // Panggil fungsi untuk menyimpan data dari API jika mode entri adalah "Otomatis (API)"
+    $data_mode = get_post_meta($post_id, '_data_source_mode', true);
+    if ($data_mode === 'api') {
+        shortplyr_save_api_data_to_post_meta($post_id);
+    }
 }
 add_action('save_post_serial_video', 'serial_video_save_api_meta_box');
+
+/**
+ * Fungsi untuk menyimpan data dari API ke post meta
+ * Hanya berjalan satu kali saat post pertama kali dipublikasikan
+ */
+function shortplyr_save_api_data_to_post_meta($post_id) {
+    // Cek apakah post sudah dipublikasikan sebelumnya
+    $has_been_published = get_post_meta($post_id, '_api_data_saved', true);
+    $post_status = get_post_status($post_id);
+    
+    // Hanya berjalan jika status post adalah 'publish' dan data belum pernah disimpan sebelumnya
+    if ($post_status === 'publish' && !$has_been_published) {
+        // Ambil data dari API menggunakan fungsi yang sudah ada
+        include_once dirname(__FILE__) . '/api-handler.php';
+        
+        if (function_exists('_shortplyr_fetch_api_episodes')) {
+            $api_data = _shortplyr_fetch_api_episodes($post_id);
+            $book_details = $api_data['details'];
+            
+            if (!empty($book_details)) {
+                // Ekstrak data yang dibutuhkan
+                $book_name = isset($book_details['book_name']) ? $book_details['book_name'] : '';
+                $abstract = isset($book_details['abstract']) ? $book_details['abstract'] : '';
+                $thumb_url = isset($book_details['thumb_url']) ? $book_details['thumb_url'] : '';
+                
+                // Simpan data ke post meta
+                update_post_meta($post_id, '_extracted_book_name', $book_name);
+                update_post_meta($post_id, '_extracted_abstract', $abstract);
+                update_post_meta($post_id, '_extracted_thumb_url', $thumb_url);
+                
+                // Tandai bahwa data sudah disimpan untuk mencegah eksekusi berulang
+                update_post_meta($post_id, '_api_data_saved', true);
+            }
+        }
+    }
+}

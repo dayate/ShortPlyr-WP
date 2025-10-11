@@ -1,5 +1,5 @@
 
-import { processAndDisplayPoster } from './apiClient.js';
+import { processAndDisplayPoster } from './utils/imageProcessor.js';
 
 export const clamp = (n, min, max) => Math.max(min, Math.min(n, max));
 

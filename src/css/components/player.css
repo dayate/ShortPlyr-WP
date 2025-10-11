@@ -1,0 +1,8 @@
+/* Mengatasi beberapa default xgplayer jika diperlukan */
+.xgplayer .xgplayer-controls {
+  bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+}
+
+.xgplayer video {
+  object-fit: contain !important;
+}

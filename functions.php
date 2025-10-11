@@ -5,10 +5,8 @@
  * @package ShortPlyr
  */
 
-// Theme version.
-define( 'SHORTPLYR_VERSION', '1.0.0' );
-
 // Include required files.
+require_once get_template_directory() . '/inc/utils/constants.php';
 require_once get_template_directory() . '/inc/cpt-setup.php';
 require_once get_template_directory() . '/inc/enqueue-scripts.php';
 require_once get_template_directory() . '/inc/theme-settings.php';
@@ -101,3 +99,21 @@ if ( ! function_exists('custom_logout_redirect_handler') ) {
     }
     add_action( 'wp_logout', 'custom_logout_redirect_handler' );
 }
+
+
+
+
+
+/**
+ * Membersihkan permalink saat tema diaktifkan untuk memastikan struktur URL benar
+ */
+function shortplyr_flush_rewrite_rules() {
+    $current_theme = wp_get_theme();
+    $theme_name = $current_theme->get('Name');
+    
+    if ($theme_name === 'ShortPlyr' && get_option('shortplyr_flushed_rewrite_rules') !== '1') {
+        flush_rewrite_rules();
+        update_option('shortplyr_flushed_rewrite_rules', '1');
+    }
+}
+add_action('after_switch_theme', 'shortplyr_flush_rewrite_rules');

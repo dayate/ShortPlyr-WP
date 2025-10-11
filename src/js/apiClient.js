@@ -1,4 +1,4 @@
-import heic2any from 'heic2any';
+import { processAndDisplayPoster } from './utils/imageProcessor.js';
 
 let isInitialLoad = true; // Flag for initial load
 
@@ -20,45 +20,6 @@ export const showError = (msg, titleEl, playerContainer) => {
     playerContainer.innerHTML = `<div class="w-full h-full flex items-center justify-center text-red-400 p-4">${msg}</div>`;
   }
 };
-
-/**
- * Fungsi untuk memproses dan menampilkan poster, termasuk konversi HEIC/HEIF
- */
-async function processAndDisplayPoster(url, container, altText) {
-  if (!url) {
-    container.src = '';
-    container.alt = 'Poster tidak tersedia';
-    return;
-  }
-
-  try {
-    // Ambil hanya bagian path dari URL untuk mengabaikan query string (?rk3s=...)
-    const pathname = new URL(url).pathname;
-
-    // Cek apakah path tersebut berakhiran .heic atau .heif
-    if (pathname.endsWith('.heic') || pathname.endsWith('.heif')) {
-      const response = await fetch(url);
-      if (!response.ok)
-        throw new Error(`HTTP error! status: ${response.status}`);
-      const blob = await response.blob();
-
-      const conversionResult = await heic2any({
-        blob: blob,
-        toType: 'image/jpeg',
-      });
-
-      container.src = URL.createObjectURL(conversionResult);
-      container.alt = altText;
-    } else {
-      container.src = url;
-      container.alt = altText;
-    }
-  } catch (error) {
-    console.error('Client-side image processing error:', error);
-    container.src = url;
-    container.alt = 'Error memproses gambar. Menampilkan gambar asli.';
-  }
-}
 
 /**
  * Mengambil data dari REST API dan menginisialisasi aplikasi.

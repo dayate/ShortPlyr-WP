@@ -51,5 +51,28 @@ function sudutcerita_enqueue_assets() {
         // Kirim data esensial ke JavaScript untuk AJAX.
         wp_localize_script('sudutcerita-main-script', 'shortplyrData', $data_for_js);
     }
+    
+    // Muat script HEIC converter di halaman arsip serial_video dan halaman utama (karena sekarang menggunakan template arsip)
+    if (is_post_type_archive('serial_video') || is_home() || is_front_page()) {
+        // Muat file JavaScript HEIC converter
+        wp_enqueue_script('sudutcerita-heic-converter', get_template_directory_uri() . '/assets/js/heic-converter.min.js', [], SHORTPLYR_VERSION, true);
+    }
+    
+    // Muat script dan style tambahan untuk halaman depan (index.php)
+    if (is_front_page() || is_home()) {
+        // Enqueue Swiper CSS & JS
+        wp_enqueue_style('swiper-css', get_template_directory_uri() . '/assets/css/swiper-bundle.min.css', [], '11.0.5');
+        wp_enqueue_script('swiper-js', get_template_directory_uri() . '/assets/js/swiper-bundle.min.js', [], '11.0.5', true);
+        
+        // Enqueue Remixicons dari lokal
+        wp_enqueue_style('remixicons', get_template_directory_uri() . '/assets/css/remixicon/remixicon.css', [], '4.2.0');
+        
+        // Enqueue custom Swiper pagination styles
+        wp_enqueue_style('swiper-pagination-css', get_template_directory_uri() . '/assets/css/swiper-pagination.css', [], '1.0');
+        
+        // Enqueue main script untuk halaman depan
+        $main_js_ver = filemtime(get_theme_file_path('/assets/js/main.js'));
+        wp_enqueue_script('shortplyr-main-js', get_template_directory_uri() . '/assets/js/main.js', ['swiper-js'], $main_js_ver, true);
+    }
 }
 add_action('wp_enqueue_scripts', 'sudutcerita_enqueue_assets');

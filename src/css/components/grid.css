@@ -1,0 +1,10 @@
+/* 3. Grid Episode Dinamis */
+.episode-grid {
+  grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+}
+
+@media (min-width: 1024px) {
+  .episode-grid {
+    grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  }
+}
