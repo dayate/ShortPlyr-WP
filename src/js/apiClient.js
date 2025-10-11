@@ -38,31 +38,6 @@ export const fetchDataAndInitialize = async (populateUICallback) => {
   }
   
   const { post_id, api_url, nonce } = window.shortplyrData;
-  const cacheKey = `shortplyr_data_${post_id}`;
-
-  // Cek localStorage untuk data cache
-  const cachedItem = localStorage.getItem(cacheKey);
-
-  if (cachedItem) {
-    try {
-      const { fetch_timestamp, data } = JSON.parse(cachedItem);
-      const now = new Date().getTime();
-      const fetchTimeSeconds = Math.floor(fetch_timestamp / 1000);
-      const safetyMarginExpiryTime = (fetchTimeSeconds + (2.5 * 60 * 60)) * 1000; // 2.5 jam dari waktu pengambilan
-      
-      if (now < safetyMarginExpiryTime) {
-        // Data cache masih valid dalam batas aman
-        hidePlayerLoader(document.querySelector('#player-loader'));
-        populateUICallback(data);
-        return;
-      } else {
-        // Melewati batas aman (2.5 jam), hapus cache dan ambil data baru
-        localStorage.removeItem(cacheKey);
-      }
-    } catch (e) {
-      localStorage.removeItem(cacheKey);
-    }
-  }
 
   try {
     const response = await fetch(api_url, {
@@ -84,17 +59,6 @@ export const fetchDataAndInitialize = async (populateUICallback) => {
         document.querySelector('#xgplayer'),
       );
       return;
-    }
-
-    // Simpan ke localStorage dengan waktu pengambilan data asli dari server
-    const itemToCache = {
-      fetch_timestamp: seriesData.fetch_timestamp || new Date().getTime(), // Gunakan waktu dari server jika tersedia
-      data: seriesData,
-    };
-
-    try {
-      localStorage.setItem(cacheKey, JSON.stringify(itemToCache));
-    } catch (e) {
     }
 
     populateUICallback(seriesData);
